@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Japan 2026 — Transport Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#16161f;--border:#1e1e2c;
+  --text:#e8e8f0;--muted:#6b6b80;--dim:#3a3a50;
+  --suica:#3b82f6;--jrw:#10b981;--smex:#a855f7;--cash:#f59e0b;
+  --car:#ef4444;--warn:#f97316;--ok:#22c55e;--tip:#818cf8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+
+/* HEADER */
+.hdr{background:linear-gradient(160deg,#0e0e1c,#141428);border-bottom:1px solid var(--border);padding:18px 16px 14px;position:sticky;top:0;z-index:60;backdrop-filter:blur(12px)}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:11px}
+.flag{width:40px;height:40px;background:linear-gradient(135deg,#c8102e,#8b0014);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(200,16,46,.35);flex-shrink:0}
+.brand-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.4px}
+.legend{display:flex;flex-wrap:wrap;gap:5px}
+.lbadge{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.6px;padding:3px 7px;border-radius:20px;border:1px solid;text-transform:uppercase}
+.l-suica{background:rgba(59,130,246,.12);color:var(--suica);border-color:rgba(59,130,246,.25)}
+.l-jrw{background:rgba(16,185,129,.12);color:var(--jrw);border-color:rgba(16,185,129,.25)}
+.l-smex{background:rgba(168,85,247,.12);color:var(--smex);border-color:rgba(168,85,247,.25)}
+.l-cash{background:rgba(245,158,11,.12);color:var(--cash);border-color:rgba(245,158,11,.25)}
+.l-car{background:rgba(239,68,68,.12);color:var(--car);border-color:rgba(239,68,68,.25)}
+
+/* FILTERS */
+.fbar{padding:10px 16px;display:flex;gap:7px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:none}
+.fbar::-webkit-scrollbar{display:none}
+.fbtn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:.2px;transition:all .15s}
+.fbtn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* MAIN */
+main{padding:12px 16px 80px;max-width:800px;margin:0 auto}
+
+/* JR WEST PANEL */
+.jrw-panel{background:linear-gradient(135deg,rgba(16,185,129,.09),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.jrw-panel h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--jrw);margin-bottom:10px}
+.jrw-link{display:block;font-size:11px;color:rgba(16,185,129,.7);margin-bottom:10px;text-decoration:none}
+.jrw-link:hover{color:var(--jrw)}
+.jrw-legs{display:flex;flex-direction:column;gap:3px}
+.jrw-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(16,185,129,.1)}
+.jrw-row:last-child{border:none}
+.jrw-save{color:var(--jrw);font-family:'Sono',monospace;font-weight:600}
+.jrw-total{margin-top:8px;padding-top:8px;border-top:1px solid rgba(16,185,129,.3);display:flex;justify-content:space-between;font-weight:700;font-size:13px}
+.jrw-total span:last-child{color:var(--jrw);font-family:'Sono',monospace}
+
+/* DAY BLOCK */
+.day{margin-bottom:4px}
+.day-hdr{display:flex;align-items:center;gap:10px;padding:14px 0 8px}
+.day-num{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);flex-shrink:0}
+.day-date{font-size:16px;font-weight:700;letter-spacing:-.4px;flex-shrink:0}
+.day-region{font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0}
+.day-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+
+/* STEP CARD */
+.step{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;overflow:hidden}
+.step-top{padding:11px 13px 10px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--dim);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-body{min-width:0}
+.step-route{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.step-from,.step-to{font-size:14px;font-weight:600;letter-spacing:-.2px}
+.step-arr{color:var(--muted);font-size:13px}
+.step-service{font-size:11px;color:var(--muted);font-family:'Sono',monospace;margin-bottom:6px}
+.step-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:4px;text-transform:uppercase;border:1px solid transparent;white-space:nowrap}
+.t-suica{background:rgba(59,130,246,.12);color:var(--suica);border-color:rgba(59,130,246,.2)}
+.t-jrw{background:rgba(16,185,129,.12);color:var(--jrw);border-color:rgba(16,185,129,.2)}
+.t-smex{background:rgba(168,85,247,.12);color:var(--smex);border-color:rgba(168,85,247,.2)}
+.t-cash{background:rgba(245,158,11,.12);color:var(--cash);border-color:rgba(245,158,11,.2)}
+.t-car{background:rgba(239,68,68,.12);color:var(--car);border-color:rgba(239,68,68,.2)}
+.t-free{background:rgba(107,114,128,.1);color:#9ca3af;border-color:rgba(107,114,128,.2)}
+.t-res{background:rgba(249,115,22,.12);color:var(--warn);border-color:rgba(249,115,22,.2)}
+.t-nores{background:rgba(34,197,94,.08);color:#4ade80;border-color:rgba(34,197,94,.18)}
+
+/* FARE + TIME BLOCK */
+.step-right{text-align:right;flex-shrink:0}
+.step-fare{font-family:'Sono',monospace;font-size:17px;font-weight:700;line-height:1}
+.step-fare.jrw-covered{color:var(--jrw)}
+.step-fare.muted-fare{color:var(--muted);font-size:12px}
+.step-dur{font-size:10px;color:var(--muted);margin-top:3px}
+.step-aim{font-size:10px;color:var(--warn);margin-top:2px;font-weight:600}
+
+/* NOTES */
+.notes{border-top:1px solid var(--border);padding:8px 13px 9px 51px;font-size:12px;line-height:1.55;color:#8888a8}
+.notes b{color:var(--warn);font-weight:600}
+.notes .ok{color:var(--ok)}
+.notes .tip{color:var(--tip)}
+.notes .warn{color:var(--warn);font-weight:600}
+
+/* BOOK LINK */
+.book-links{display:flex;flex-wrap:wrap;gap:6px;padding:7px 13px 9px 51px;border-top:1px solid var(--border)}
+.book-link{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;text-decoration:none;padding:4px 9px;border-radius:5px;border:1px solid;transition:opacity .15s}
+.book-link:hover{opacity:.75}
+.bl-jrw{color:var(--jrw);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
+.bl-smex{color:var(--smex);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08)}
+.bl-ekinet{color:var(--suica);border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08)}
+.bl-cash{color:var(--cash);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
+.bl-ext{color:#9ca3af;border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.08)}
+
+.hidden{display:none!important}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-row">
+    <div class="brand">
+      <div class="flag">🗾</div>
+      <div>
+        <div class="brand-title">Transport Guide</div>
+        <div class="brand-sub">Japan 2026 · Sept 16 – Oct 7 · Every leg · Timed</div>
+      </div>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="lbadge l-suica">● Suica</div>
+    <div class="lbadge l-jrw">● JR West Pass</div>
+    <div class="lbadge l-smex">● SmartEX</div>
+    <div class="lbadge l-cash">● Cash/IC</div>
+    <div class="lbadge l-car">● Car rental</div>
+  </div>
+</header>
+
+<div class="fbar">
+  <button class="fbtn on" onclick="doFilter(this,'all')">All days</button>
+  <button class="fbtn" onclick="doFilter(this,'tokyo')">Tokyo</button>
+  <button class="fbtn" onclick="doFilter(this,'alps')">Alps</button>
+  <button class="fbtn" onclick="doFilter(this,'kyoto')">Kyoto</button>
+  <button class="fbtn" onclick="doFilter(this,'kanazawa')">Kanazawa</button>
+  <button class="fbtn" onclick="doFilter(this,'onomichi')">Onomichi</button>
+  <button class="fbtn" onclick="doFilter(this,'osaka')">Osaka</button>
+  <button class="fbtn" onclick="doFilter(this,'jrwest')">JR West Pass</button>
+  <button class="fbtn" onclick="doFilter(this,'reserve')">Must reserve</button>
+</div>
+
+<main>
+
+<!-- JR WEST PASS PANEL -->
+<div class="jrw-panel" id="jrw-panel">
+  <h3>🎫 JR West All Area Pass — ¥26,000/person · Activate Sept 29 · Kyoto Station exchange desk · Bring passport</h3>
+  <a class="jrw-link" href="https://www.westjr.co.jp/global/en/ticket/pass/all_area/" target="_blank">→ Buy online at westjr.co.jp/global ↗</a>
+  <div class="jrw-legs">
+    <div class="jrw-row"><span>Sept 29 Thunderbird Kyoto→Tsuruga</span><span class="jrw-save">¥3,080 ✓</span></div>
+    <div class="jrw-row"><span>Sept 29 Hokuriku Shinkansen Tsuruga→Kanazawa</span><span class="jrw-save">¥5,490 ✓</span></div>
+    <div class="jrw-row"><span>Oct 1 Hokuriku Shinkansen Kanazawa→Tsuruga</span><span class="jrw-save">¥5,490 ✓</span></div>
+    <div class="jrw-row"><span>Oct 1 Thunderbird Tsuruga→Shin-Osaka</span><span class="jrw-save">¥5,170 ✓</span></div>
+    <div class="jrw-row"><span>Oct 1 Sanyo Shinkansen Shin-Osaka→Fukuyama</span><span class="jrw-save">¥7,260 ✓</span></div>
+    <div class="jrw-row"><span>Oct 1 Local JR Fukuyama→Onomichi</span><span class="jrw-save">¥420 ✓</span></div>
+    <div class="jrw-row"><span>Oct 3 Sanyo Shinkansen Shin-Onomichi→Hiroshima (both ways)</span><span class="jrw-save">¥7,240 ✓</span></div>
+    <div class="jrw-row"><span>Oct 3 JR Ferry Hiroshima→Miyajima (return)</span><span class="jrw-save">¥400 ✓</span></div>
+    <div class="jrw-row"><span>Oct 4 Sanyo Shinkansen Fukuyama→Shin-Osaka</span><span class="jrw-save">¥7,260 ✓</span></div>
+    <div class="jrw-row"><span>Oct 5 JR Loop Line Osaka↔USJ (return)</span><span class="jrw-save">¥840 ✓</span></div>
+    <div class="jrw-row"><span>Oct 6 Special Rapid Osaka↔Himeji (return)</span><span class="jrw-save">¥2,980 ✓</span></div>
+  </div>
+  <div class="jrw-total"><span>Total covered per person</span><span>¥45,630 → saves ~¥19,630/pax</span></div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!-- SEPT 16 — ARRIVAL -->
+<!-- ════════════════════════════════════ -->
+<div class="day" data-zone="tokyo">
+  <div class="day-hdr">
+    <span class="day-num">Day 1</span>
+    <span class="day-date">Wed 16 Sept · Arrival</span>
+    <div class="day-line"></div>
+    <span class="day-region">✈ HND → Shinjuku</span>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">HND T3</span><span class="step-arr">→</span><span class="step-to">Hamamatsucho</span></div>
+        <div class="step-service">Tokyo Monorail · Hanekyuko Line</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥500</div>
+        <div class="step-dur">13 min</div>
+        <div class="step-aim">After 22:20 land</div>
+      </div>
+    </div>
+    <div class="notes"><b>Buy Suica FIRST</b> — vending machines turn LEFT after customs, near Monorail entrance. Load ¥3,000 minimum (¥500 deposit inside). <span class="warn">Non-Japanese Android = physical card only, no mobile Suica.</span></div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Hamamatsucho</span><span class="step-arr">→</span><span class="step-to">Shinjuku</span></div>
+        <div class="step-service">JR Yamanote Line · outer loop (counterclockwise)</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥216</div>
+        <div class="step-dur">~30 min</div>
+        <div class="step-aim">~23:00 target</div>
+      </div>
+    </div>
+    <div class="notes">Outer loop direction (toward Shinagawa). Runs every 3–4 min until midnight+. Large bags: end of carriage. Hotel is 2 min walk from east exit.</div>
+  </div>
+</div>
+
+<!-- SEPT 17–20 TOKYO LOCAL -->
+<div class="day" data-zone="tokyo">
+  <div class="day-hdr">
+    <span class="day-num">Days 2–5</span>
+    <span class="day-date">Sept 17–20 · Tokyo</span>
+    <div class="day-line"></div>
+    <span class="day-region">🗼 Local transit</span>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku</span><span class="step-arr">→</span><span class="step-to">Roppongi</span></div>
+        <div class="step-service">Toei Oedo Line · Sept 17 evening (Gonpachi)</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥280</div>
+        <div class="step-dur">12 min</div>
+        <div class="step-aim">Depart ~18:30</div>
+      </div>
+    </div>
+    <div class="notes">Shinjuku-Nishiguchi (Oedo) → Roppongi, exit 7. Gonpachi is 4 min walk. Oedo Line is deep underground — allow 10 min to get down.</div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku</span><span class="step-arr">→</span><span class="step-to">Shin-Toyosu</span></div>
+        <div class="step-service">Yamanote → Shimbashi → Yurikamome · Sept 18 (teamLab Planets)</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥390</div>
+        <div class="step-dur">~40 min</div>
+        <div class="step-aim">Depart ~09:20</div>
+      </div>
+    </div>
+    <div class="notes"><b>Exit at Shin-Toyosu, NOT Toyosu station</b> — they are different. teamLab Planets is 3 min walk. Timed entry — pre-booked ticket required (Aug 18 reminder).</div>
+    <div class="book-links">
+      <a class="book-link bl-ext" href="https://planets.teamlab.art/tokyo/" target="_blank">teamLab Planets tickets ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku</span><span class="step-arr">→</span><span class="step-to">Harajuku</span></div>
+        <div class="step-service">JR Yamanote Line · Sept 19</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥160</div>
+        <div class="step-dur">5 min</div>
+        <div class="step-aim">Depart ~10:30</div>
+      </div>
+    </div>
+    <div class="notes">2 stops on Yamanote. Takeshita exit for Takeshita Street. Meiji Shrine 5 min walk from Omote-sando exit.</div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Harajuku</span><span class="step-arr">→</span><span class="step-to">Nakano</span></div>
+        <div class="step-service">JR Chuo Line (Rapid) · Sept 19 afternoon</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥220</div>
+        <div class="step-dur">~12 min</div>
+        <div class="step-aim">Depart ~15:00</div>
+      </div>
+    </div>
+    <div class="notes">Rapid service westbound. Nakano Broadway is 5 min walk north from station north exit.</div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku</span><span class="step-arr">→</span><span class="step-to">Shimokitazawa</span></div>
+        <div class="step-service">Odakyu Line (Local) · Sept 20</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥180</div>
+        <div class="step-dur">5 min</div>
+        <div class="step-aim">Depart ~10:00</div>
+      </div>
+    </div>
+    <div class="notes">Local service only (Express skips Shimokitazawa). West exit Shinjuku → underground Odakyu platforms.</div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shimokitazawa</span><span class="step-arr">→</span><span class="step-to">Ikebukuro</span></div>
+        <div class="step-service">Keio Inokashira → Shibuya → Fukutoshin Line · Sept 20 evening</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥300</div>
+        <div class="step-dur">~25 min</div>
+        <div class="step-aim">Depart ~18:00</div>
+      </div>
+    </div>
+    <div class="notes">Shimokitazawa → Shibuya (5 stops Keio Inokashira) → change to Fukutoshin Line northbound → Ikebukuro. Suica works through the connection.</div>
+  </div>
+
+  <div class="step" data-zone="tokyo" data-res="n">
+    <div class="step-top">
+      <div class="step-num">⬛</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku 7-Eleven</span><span class="step-arr">→</span><span class="step-to">KABIN Gion Kyoto</span></div>
+        <div class="step-service">Yamato Takkyubin luggage forwarding · <b>Send Sept 20</b></div>
+        <div class="step-tags"><span class="tag t-cash">Cash only ¥2,500/bag</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥12,500</div>
+        <div class="step-dur">5 bags total</div>
+        <div class="step-aim">Send by 17:00 Sept 20</div>
+      </div>
+    </div>
+    <div class="notes"><b>Send TODAY before heading to Ikebukuro.</b> 7-Eleven near Shinjuku east exit. Fill Yamato form: destination = KABIN Gion, Kyoto. Bags arrive Sept 21–22, waiting in room at check-in Sept 25. <span class="ok">Pack daypacks only for 4 nights in Alps.</span></div>
+  </div>
+</div>
+
+<!-- ════════════════════ -->
+<!-- SEPT 21 — TO MATSUMOTO -->
+<!-- ════════════════════ -->
+<div class="day" data-zone="alps">
+  <div class="day-hdr">
+    <span class="day-num">Day 6</span>
+    <span class="day-date">Mon 21 Sept · 🏔 Tokyo → Alps</span>
+    <div class="day-line"></div>
+    <span class="day-region">National holiday</span>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="y">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shinjuku</span><span class="step-arr">→</span><span class="step-to">Matsumoto</span></div>
+        <div class="step-service">JR Azusa 5 Limited Express · Platform 8/9 (JR west side)</div>
+        <div class="step-tags"><span class="tag t-suica">Suica + surcharge</span><span class="tag t-res">⚠ Reserve essential</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥6,620</div>
+        <div class="step-dur">~2.5 hrs</div>
+        <div class="step-aim">Aim: Azusa 5 ~09:00</div>
+      </div>
+    </div>
+    <div class="notes">
+      <b>🚨 Book on Aug 22 the moment eki-net opens</b> — national holiday, sells out within hours. Target Azusa 5 (~09:00 dep, ~11:22 arr Matsumoto) leaving time for castle visit + lunch before 13:00 car pickup. Azusa 3 (~08:00) even better if available. <span class="warn">Azusa 9 (10:00 dep, 12:32 arr) is the latest safe option — tight for 13:00 car pickup.</span> E-ticket on phone — show at gate.
+    </div>
+    <div class="book-links">
+      <a class="book-link bl-ekinet" href="https://www.eki-net.com/en/jreast-train-reservation/Top/Index" target="_blank">Book on Eki-net (JR East) ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Matsumoto Castle</span><span class="step-arr">+</span><span class="step-to">Soba lunch</span></div>
+        <div class="step-service">Walking · 15 min from station</div>
+        <div class="step-tags"><span class="tag t-free">On foot</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥700</div>
+        <div class="step-dur">1.5 hrs</div>
+        <div class="step-aim">Arrive ~11:22–12:32</div>
+      </div>
+    </div>
+    <div class="notes">Castle pre-booked (book Aug 22 same session as Azusa). Budget 1.5 hrs. Shinshu soba near castle for lunch. <b>Hard cutoff: back at station by 12:45 for 13:00 car pickup.</b></div>
+    <div class="book-links">
+      <a class="book-link bl-ext" href="https://www.matsumoto-castle.jp/en/" target="_blank">Matsumoto Castle tickets ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Matsumoto Station East Exit</span><span class="step-arr">→</span><span class="step-to">Okuhida Hotel</span></div>
+        <div class="step-service">Toyota Rent-a-Car Serena (prepaid) · 2-48-6 Chuo</div>
+        <div class="step-tags"><span class="tag t-car">Car rental prepaid</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">Prepaid</div>
+        <div class="step-dur">~1.5 hrs</div>
+        <div class="step-aim">Pickup 13:00 sharp</div>
+      </div>
+    </div>
+    <div class="notes">ETC card included — highway tolls deducted at drop-off. <b>Leave Matsumoto by 15:30 at the absolute latest</b> — hotel dinner service closes 20:00 and drive is 1.5 hrs via National Route 158.</div>
+  </div>
+</div>
+
+<!-- SEPT 22 — KAMIKOCHI -->
+<div class="day" data-zone="alps">
+  <div class="day-hdr">
+    <span class="day-num">Day 7</span>
+    <span class="day-date">Tue 22 Sept · 🌋 Kamikochi</span>
+    <div class="day-line"></div>
+    <span class="day-region">No Silver Week crowds (weekday)</span>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Hotel</span><span class="step-arr">→</span><span class="step-to">Akandana Parking (Hirayu)</span></div>
+        <div class="step-service">Self-drive · NOT Sawando parking</div>
+        <div class="step-tags"><span class="tag t-car">Car rental</span><span class="tag t-cash">¥600 parking cash</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥600</div>
+        <div class="step-dur">14 min</div>
+        <div class="step-aim">Depart 08:00</div>
+      </div>
+    </div>
+    <div class="notes"><b>AKANDANA (Hirayu, Gifu side) — private cars cannot drive to Kamikochi.</b> Park here. ¥600/day cash at entrance machine.</div>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Akandana</span><span class="step-arr">→</span><span class="step-to">Kamikochi Bus Terminal</span></div>
+        <div class="step-service">Nohi Bus shuttle · non-reserved vending machine</div>
+        <div class="step-tags"><span class="tag t-cash">Cash at vending machine</span><span class="tag t-nores">Non-reserved</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥1,200</div>
+        <div class="step-dur">~35 min</div>
+        <div class="step-aim">~08:20 bus</div>
+      </div>
+    </div>
+    <div class="notes"><b>🚨 BEFORE starting the walk: go to bus terminal ticket window, show return ticket, choose a return time, get a numbered seat.</b> Without seat number you CANNOT board. Last return bus 17:00 — do not miss. ¥1,200 × 5 each way = ¥12,000 RT total.</div>
+  </div>
+</div>
+
+<!-- SEPT 23-24 KISO VALLEY -->
+<div class="day" data-zone="alps">
+  <div class="day-hdr">
+    <span class="day-num">Days 8–9</span>
+    <span class="day-date">Sept 23–24 · 🏘 Kiso Valley</span>
+    <div class="day-line"></div>
+    <span class="day-region">Car throughout</span>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Okuhida</span><span class="step-arr">→</span><span class="step-to">Tsumago · Kiso Mikawaya</span></div>
+        <div class="step-service">Self-drive · direct via Matsumoto (NOT via Shirakawa-go)</div>
+        <div class="step-tags"><span class="tag t-car">Car rental</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥0</div>
+        <div class="step-dur">~2–3 hrs</div>
+        <div class="step-aim">Depart ~09:00</div>
+      </div>
+    </div>
+    <div class="notes"><span class="ok">Take direct route via Matsumoto — NOT Shirakawa-go.</span> Sept 23 = Silver Week peak, Shirakawa-go will have parking chaos. Optional stop: <span class="tip">Narai post town is directly on route — 30–60 min, pull off, walk the preserved merchant street, free entry.</span></div>
+  </div>
+
+  <div class="step" data-zone="alps" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kiso Mikawaya</span><span class="step-arr">→</span><span class="step-to">Magome (park) → walk to Tsumago</span></div>
+        <div class="step-service">Nakasendo Walk · Sept 24 · 8km downhill · ~3 hrs</div>
+        <div class="step-tags"><span class="tag t-car">Car to Magome (free parking)</span><span class="tag t-cash">Bus return ¥270</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥270</div>
+        <div class="step-dur">3 hrs walk</div>
+        <div class="step-aim">Drive ~08:00 · walk ~09:00</div>
+      </div>
+    </div>
+    <div class="notes">Drive Serena to Magome (~20 min, free parking). Walk Magome→Tsumago downhill, easier on knees. <span class="ok">1 person takes local bus Tsumago→Magome (~15 min, ¥270) to retrieve the Serena</span> — others wait at ryokan. Guide arranged via Kiso Mikawaya — confirm Aug 22. <b>Pack all luggage tonight</b> — tomorrow is Nagoya drop-off.</div>
+  </div>
+</div>
+
+<!-- ════════════════════ -->
+<!-- SEPT 25 — TO KYOTO -->
+<!-- ════════════════════ -->
+<div class="day" data-zone="kyoto">
+  <div class="day-hdr">
+    <span class="day-num">Day 10</span>
+    <span class="day-date">Fri 25 Sept · ⛩ Nagoya → Kyoto</span>
+    <div class="day-line"></div>
+    <span class="day-region">Car return day</span>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kiso Mikawaya</span><span class="step-arr">→</span><span class="step-to">Toyota Nagoya Shinkansen Exit Branch</span></div>
+        <div class="step-service">Car return · 4-1-16 Taikoo, Nagoya</div>
+        <div class="step-tags"><span class="tag t-car">Return rental</span><span class="tag t-cash">Tolls settled ~¥15,000</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">~¥15,000</div>
+        <div class="step-dur">~2 hrs drive</div>
+        <div class="step-aim">Return by 12:00</div>
+      </div>
+    </div>
+    <div class="notes">ETC highway toll charges settled here on card — approx ¥15,000 for the full Alps loop. Allow time before your Shinkansen.</div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Nagoya</span><span class="step-arr">→</span><span class="step-to">Kyoto</span></div>
+        <div class="step-service">Tokaido Shinkansen · Hikari (stops Kyoto) or Nozomi · Cars 1–3 non-reserved</div>
+        <div class="step-tags"><span class="tag t-smex">SmartEX app</span><span class="tag t-nores">Non-reserved cars 1–3</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥4,790</div>
+        <div class="step-dur">~35 min</div>
+        <div class="step-aim">Aim for ~13:00–14:00</div>
+      </div>
+    </div>
+    <div class="notes">Pre-book via SmartEX (reminder Aug 26). Non-reserved = join queue for cars 1–3, no specific seat. <b>Hikari stops at Kyoto — Nozomi skips it. Check the board.</b> ¥4,790/pax × 5 = ¥23,950 total. <span class="warn">NOT on JR West Pass</span> (Pass starts Sept 29).</div>
+    <div class="book-links">
+      <a class="book-link bl-smex" href="https://smart-ex.jp/en/top.php" target="_blank">Book SmartEX ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kyoto Station</span><span class="step-arr">→</span><span class="step-to">KABIN Gion</span></div>
+        <div class="step-service">Bus 100 or 206 → Gion-Shijo · or taxi</div>
+        <div class="step-tags"><span class="tag t-suica">Suica (bus)</span><span class="tag t-cash">Taxi ~¥1,800 group</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥230</div>
+        <div class="step-dur">~20 min</div>
+        <div class="step-aim">~14:30 arrival</div>
+      </div>
+    </div>
+    <div class="notes">Bus stop D2/D3 at Kyoto Station. With large bags = taxi easier (¥1,800 total split). <span class="ok">Suitcases shipped from Tokyo already waiting in room.</span> E-bikes at 16:00 — Kamo River sunset ride.</div>
+  </div>
+</div>
+
+<!-- SEPT 26–28 KYOTO LOCAL -->
+<div class="day" data-zone="kyoto">
+  <div class="day-hdr">
+    <span class="day-num">Days 11–13</span>
+    <span class="day-date">Sept 26–28 · ⛩ Kyoto local</span>
+    <div class="day-line"></div>
+    <span class="day-region">Metro + JR local</span>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Gion-Shijo Metro</span><span class="step-arr">→</span><span class="step-to">Nijo Castle</span></div>
+        <div class="step-service">Kyoto Metro Tozai Line · Sept 26 morning</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥220</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">Depart ~09:00</div>
+      </div>
+    </div>
+    <div class="notes">Tozai Line westbound → Nijo Station, exit 2. Castle 3 min walk. Opens 08:45.</div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Fushimi (Torisei brewery)</span><span class="step-arr">→</span><span class="step-to">Fushimi Inari</span></div>
+        <div class="step-service">JR Nara Line · Sept 26 afternoon</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥150</div>
+        <div class="step-dur">3 min</div>
+        <div class="step-aim">Arrive Inari ~16:00</div>
+      </div>
+    </div>
+    <div class="notes">Momoyama-Goryo-Mae → Inari (1 stop). <span class="ok">Arrive 16:00–17:00 — crowds thin, golden light.</span> Torii gates free, open 24hrs.</div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Demachiyanagi</span><span class="step-arr">→</span><span class="step-to">Kurama</span></div>
+        <div class="step-service">Eizan Railway · Sept 27 · single-carriage mountain train</div>
+        <div class="step-tags"><span class="tag t-cash">IC / cash at station</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥430</div>
+        <div class="step-dur">~28 min</div>
+        <div class="step-aim">Guy departs 09:00 · family 10:00</div>
+      </div>
+    </div>
+    <div class="notes">Demachiyanagi is the northern end of the Keihan line. <b>Guy departs 09:00 alone to queue at Hirobun</b> — walk-up only, no reservation, queue for noon slot. Family departs 10:00–10:30. Return from Kibune-guchi after ridge hike.</div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">—</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kyoto Station</span><span class="step-arr">→</span><span class="step-to">Saga-Arashiyama</span></div>
+        <div class="step-service">JR San-in Line (Sagano Line) · Sept 28</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥240</div>
+        <div class="step-dur">~25 min</div>
+        <div class="step-aim">Depart ~09:30</div>
+      </div>
+    </div>
+    <div class="notes">JR platforms at Kyoto Station (not Metro). Direct to Saga-Arashiyama. Bamboo grove 10 min walk. Continue to Adashino Nenbutsuji on foot through the village.</div>
+  </div>
+
+  <div class="step" data-zone="kyoto" data-res="n">
+    <div class="step-top">
+      <div class="step-num">⬛</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">KABIN Gion front desk</span><span class="step-arr">→</span><span class="step-to">Onomichi Komichi Villa</span></div>
+        <div class="step-service">Yamato Takkyubin · send Sept 28 · arrives Oct 1–2</div>
+        <div class="step-tags"><span class="tag t-cash">Cash ¥2,500/bag</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥12,500</div>
+        <div class="step-dur">5 bags</div>
+        <div class="step-aim">Send Sept 28 morning</div>
+      </div>
+    </div>
+    <div class="notes">Drop bags at KABIN front desk on Sept 28. They handle Yamato pickup. Bags waiting at villa on arrival Oct 1.</div>
+  </div>
+</div>
+
+<!-- ════════════════════ -->
+<!-- SEPT 29 — TO KANAZAWA -->
+<!-- ════════════════════ -->
+<div class="day" data-zone="kanazawa">
+  <div class="day-hdr">
+    <span class="day-num">Day 14</span>
+    <span class="day-date">Tue 29 Sept · 🏯 Kyoto → Kanazawa</span>
+    <div class="day-line"></div>
+    <span class="day-region">JR West Pass ACTIVATES TODAY</span>
+  </div>
+
+  <div class="step" data-zone="kanazawa" data-res="y">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kyoto Station</span><span class="step-arr">·</span><span class="step-to">JR West Pass exchange + seat reservations</span></div>
+        <div class="step-service">JR West ticket office · exchange desk · bring all 5 passports</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass</span><span class="tag t-res">⚠ Reserve all Shinkansen NOW</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥130,000</div>
+        <div class="step-dur">Allow 45 min</div>
+        <div class="step-aim">Arrive desk ~08:30</div>
+      </div>
+    </div>
+    <div class="notes"><b>Reserve ALL upcoming Shinkansen seats in one session:</b> Sept 29 Thunderbird + Hokuriku, Oct 1 (all 4 trains), Oct 3 Hiroshima both ways, Oct 4 Fukuyama→Shin-Osaka. This avoids multiple queue visits. Exchange desk opens 05:30.</div>
+    <div class="book-links">
+      <a class="book-link bl-jrw" href="https://www.westjr.co.jp/global/en/ticket/pass/all_area/" target="_blank">JR West Pass info ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="kanazawa" data-res="y">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kyoto</span><span class="step-arr">→</span><span class="step-to">Tsuruga</span></div>
+        <div class="step-service">JR Thunderbird 5 Limited Express</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved seat</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~50 min</div>
+        <div class="step-aim">Thunderbird 5 ~10:00</div>
+      </div>
+    </div>
+    <div class="notes">After pass exchange. Thunderbird 5 departs Kyoto ~10:03 → Tsuruga ~10:56 (verify exact time when booking). Or Thunderbird 7 ~11:00 if needed. Scenic coastal route.</div>
+  </div>
+
+  <div class="step" data-zone="kanazawa" data-res="y">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Tsuruga</span><span class="step-arr">→</span><span class="step-to">Kanazawa</span></div>
+        <div class="step-service">Hokuriku Shinkansen · Tsurugi or Kagayaki</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved seat</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~40 min</div>
+        <div class="step-aim">~11:30–12:00 arrive</div>
+      </div>
+    </div>
+    <div class="notes">Tsuruga → Kanazawa ~40 min. Kanazawa Station: famous Tsuzumimon drum gate east exit. Square hotel 2 min walk. <span class="ok">Omicho Market open afternoon — nodoguro and shiroebi from morning catch.</span></div>
+  </div>
+</div>
+
+<!-- OCT 1 — KANAZAWA TO ONOMICHI -->
+<div class="day" data-zone="onomichi">
+  <div class="day-hdr">
+    <span class="day-num">Day 16</span>
+    <span class="day-date">Thu 1 Oct · 🚅 Kanazawa → Onomichi</span>
+    <div class="day-line"></div>
+    <span class="day-region">Long travel day · depart early</span>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="y">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Kanazawa</span><span class="step-arr">→</span><span class="step-to">Tsuruga</span></div>
+        <div class="step-service">Hokuriku Shinkansen · Tsurugi</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~40 min</div>
+        <div class="step-aim">Depart ~09:00</div>
+      </div>
+    </div>
+    <div class="notes"><span class="tip">Buy ekiben (station bento) at Kanazawa Station before boarding — best regional bento in Japan.</span> Tsurugi departs roughly every 30 min.</div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="y">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Tsuruga</span><span class="step-arr">→</span><span class="step-to">Shin-Osaka</span></div>
+        <div class="step-service">JR Thunderbird Limited Express</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~1.5 hrs</div>
+        <div class="step-aim">~09:45 dep Tsuruga</div>
+      </div>
+    </div>
+    <div class="notes"></div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="y">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shin-Osaka</span><span class="step-arr">→</span><span class="step-to">Fukuyama</span></div>
+        <div class="step-service">Sanyo Shinkansen · Hikari or Kodama</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~1 hr</div>
+        <div class="step-aim">~11:30 dep Shin-Osaka</div>
+      </div>
+    </div>
+    <div class="notes"><b>Stop at Fukuyama — do NOT overshoot to Shin-Onomichi.</b> Shin-Onomichi Shinkansen station is far from town. Take local JR from Fukuyama instead.</div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Fukuyama</span><span class="step-arr">→</span><span class="step-to">Onomichi</span></div>
+        <div class="step-service">Local JR Sanyo Line · frequent service</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">Arrive ~13:00</div>
+      </div>
+    </div>
+    <div class="notes"><span class="ok">Luggage shipped from Kyoto/Kanazawa already at villa.</span> <b>Senkoji Ropeway closes ~17:30</b> — head there first for sunset Seto Inland Sea views (sunset ~18:00 late Sept).</div>
+  </div>
+</div>
+
+<!-- OCT 2 — SHIMANAMI KAIDO -->
+<div class="day" data-zone="onomichi">
+  <div class="day-hdr">
+    <span class="day-num">Day 17</span>
+    <span class="day-date">Fri 2 Oct · 🚴 Shimanami Kaido</span>
+    <div class="day-line"></div>
+    <span class="day-region">E-bikes pre-booked</span>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Onomichi Port</span><span class="step-arr">→</span><span class="step-to">Mukaishima Island</span></div>
+        <div class="step-service">Onomichi–Mukaishima Ferry · bikes on deck</div>
+        <div class="step-tags"><span class="tag t-cash">Cash ¥110</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥110</div>
+        <div class="step-dur">3 min</div>
+        <div class="step-aim">Depart ~08:30</div>
+      </div>
+    </div>
+    <div class="notes"><b>Ferry terminal moved Oct 2025 — confirm new location at villa on arrival.</b> Departs frequently. This is the official start of the Shimanami Kaido cycling route.</div>
+    <div class="book-links">
+      <a class="book-link bl-ext" href="https://www.visit-shimanami.com/cycling/rental-cycle/" target="_blank">E-bike rental info ↗</a>
+    </div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Mukaishima</span><span class="step-arr">→</span><span class="step-to">Setoda (Ikuchijima) · turnaround</span></div>
+        <div class="step-service">Shimanami Kaido Cycle · ~25km each way · 6 islands</div>
+        <div class="step-tags"><span class="tag t-free">E-bike (pre-booked)</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">Pre-paid</div>
+        <div class="step-dur">~4–5 hrs</div>
+        <div class="step-aim">Return ferry by 15:30</div>
+      </div>
+    </div>
+    <div class="notes">Blue ocean, citrus groves, suspension bridges. Setoda = lemon ice cream + Kosanji Temple. <b>Check return ferry timetable Setoda→Onomichi before departing.</b> Bikes returned at Onomichi terminal.</div>
+  </div>
+</div>
+
+<!-- OCT 3 — HIROSHIMA -->
+<div class="day" data-zone="onomichi">
+  <div class="day-hdr">
+    <span class="day-num">Day 18</span>
+    <span class="day-date">Sat 3 Oct · 🕊 Hiroshima Day Trip</span>
+    <div class="day-line"></div>
+    <span class="day-region">Day trip from Onomichi</span>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Onomichi town</span><span class="step-arr">→</span><span class="step-to">Shin-Onomichi Station</span></div>
+        <div class="step-service">Taxi or local bus</div>
+        <div class="step-tags"><span class="tag t-cash">Taxi ~¥2,000</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">~¥2,000</div>
+        <div class="step-dur">~10 min</div>
+        <div class="step-aim">Depart villa ~08:30</div>
+      </div>
+    </div>
+    <div class="notes">Shin-Onomichi Shinkansen station is up on the hill, not walkable from town. Split taxi fare between 5 people = ¥400/pax. <b>Also arrange luggage forwarding Onomichi→Nishiki-en Osaka this morning</b> — take bags to konbini near port, Yamato forms, ¥2,500/bag (or carry bags Oct 4 direct train).</div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="y">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shin-Onomichi</span><span class="step-arr">→</span><span class="step-to">Hiroshima</span></div>
+        <div class="step-service">Sanyo Shinkansen · Kodama</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved both ways</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~30 min</div>
+        <div class="step-aim">Kodama ~09:10</div>
+      </div>
+    </div>
+    <div class="notes">Reserve both outbound and return when activating pass Sept 29. Aim to arrive Hiroshima by 10:00 — Peace Museum needs 2 hrs minimum.</div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Hiroshima Station</span><span class="step-arr">→</span><span class="step-to">Peace Museum area</span></div>
+        <div class="step-service">Hiroshima Streetcar (tram) Line 2 or 6</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥190</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">~10:00</div>
+      </div>
+    </div>
+    <div class="notes">Exit at Genbaku Dome-mae stop. Peace Museum across the river (free outside). Nagataya okonomiyaki is 1 min walk from this stop.</div>
+  </div>
+
+  <div class="step" data-zone="onomichi" data-res="n">
+    <div class="step-top">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Hiroshima</span><span class="step-arr">→</span><span class="step-to">Miyajima</span></div>
+        <div class="step-service">JR Ferry from Hiroshima Port · <b>JR ferry only</b></div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">Afternoon ~14:00</div>
+      </div>
+    </div>
+    <div class="notes"><b>Use JR Ferry specifically (not Matsudai Ferry) — only JR ferry covered by pass.</b> Check tide times for floating torii gate. High tide = gate floats, low tide = walk up to it. Deer roam freely. Return to Hiroshima for okonomiyaki dinner.</div>
+  </div>
+</div>
+
+<!-- OCT 4 — TO OSAKA -->
+<div class="day" data-zone="osaka">
+  <div class="day-hdr">
+    <span class="day-num">Day 19</span>
+    <span class="day-date">Sun 4 Oct · 🌆 Onomichi → Osaka</span>
+    <div class="day-line"></div>
+    <span class="day-region">Last Shinkansen leg</span>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Onomichi</span><span class="step-arr">→</span><span class="step-to">Fukuyama</span></div>
+        <div class="step-service">Local JR Sanyo Line</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">Depart ~10:00</div>
+      </div>
+    </div>
+    <div class="notes"></div>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="y">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Fukuyama</span><span class="step-arr">→</span><span class="step-to">Shin-Osaka</span></div>
+        <div class="step-service">Sanyo Shinkansen · Hikari or Nozomi</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-res">⚠ Reserved</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~1 hr</div>
+        <div class="step-aim">~10:20 depart Fukuyama</div>
+      </div>
+    </div>
+    <div class="notes"></div>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Shin-Osaka</span><span class="step-arr">→</span><span class="step-to">Namba · Nishiki-en</span></div>
+        <div class="step-service">Osaka Metro Midosuji Line (red)</div>
+        <div class="step-tags"><span class="tag t-suica">Suica</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥280</div>
+        <div class="step-dur">~15 min</div>
+        <div class="step-aim">Arrive ~11:40</div>
+      </div>
+    </div>
+    <div class="notes">Shin-Osaka → Namba (5 stops, red Midosuji Line). Nishiki-en is 5 min walk from exit 25. teamLab Botanical Garden tonight opens ~19:45 — online ticket booked Sept 14.</div>
+  </div>
+</div>
+
+<!-- OCT 5 — USJ -->
+<div class="day" data-zone="osaka">
+  <div class="day-hdr">
+    <span class="day-num">Day 20</span>
+    <span class="day-date">Mon 5 Oct · 🍄 Universal Studios Japan</span>
+    <div class="day-line"></div>
+    <span class="day-region">Monday = smaller crowds</span>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Osaka-Namba Station</span><span class="step-arr">→</span><span class="step-to">Universal City</span></div>
+        <div class="step-service">JR Osaka Loop Line · 5 min walk from Namba Metro to JR Osaka-Namba</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓ (last day)</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~20 min</div>
+        <div class="step-aim">Depart ~08:30</div>
+      </div>
+    </div>
+    <div class="notes"><b>Walk 5 min from Namba Metro to JR Osaka-Namba station — different stations.</b> JR Loop Line → Universal City. Express Pass essential: Nintendo World + Harry Potter + Donkey Kong. Book Aug 3.</div>
+    <div class="book-links">
+      <a class="book-link bl-ext" href="https://www.usj.co.jp/web/en/us" target="_blank">USJ Express Pass ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- OCT 6 — DEPARTURE -->
+<div class="day" data-zone="osaka">
+  <div class="day-hdr">
+    <span class="day-num">Day 21</span>
+    <span class="day-date">Tue 6 Oct · ✈ Departure day · Flight 23:45</span>
+    <div class="day-line"></div>
+    <span class="day-region">KIX check-in by 21:00</span>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Osaka</span><span class="step-arr">→</span><span class="step-to">Himeji</span></div>
+        <div class="step-service">JR Special Rapid · <b>NOT Shinkansen</b></div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~60 min</div>
+        <div class="step-aim">Depart Osaka ~10:00</div>
+      </div>
+    </div>
+    <div class="notes">Special Rapid is faster value and fully covered by pass. Himeji Castle 15 min walk from station — Japan's finest. UNESCO. ¥2,500 entry. Allow 2 hrs at castle.</div>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Himeji</span><span class="step-arr">→</span><span class="step-to">Osaka-Namba</span></div>
+        <div class="step-service">JR Special Rapid → Osaka → walk to Namba</div>
+        <div class="step-tags"><span class="tag t-jrw">JR West Pass ✓</span><span class="tag t-nores">No reserve</span></div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare jrw-covered">¥0</div>
+        <div class="step-dur">~70 min</div>
+        <div class="step-aim">Depart Himeji ~14:00</div>
+      </div>
+    </div>
+    <div class="notes">Back at Nishiki-en by ~15:15 to collect bags from bell desk. Allow buffer time — departure day.</div>
+  </div>
+
+  <div class="step" data-zone="osaka" data-res="n">
+    <div class="step-top">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-route"><span class="step-from">Osaka-Namba</span><span class="step-arr">→</span><span class="step-to">KIX</span></div>
+        <div class="step-service">Nankai Rapi:t Express · iron robot train · buy at Nankai Namba Station</div>
+        <div class="step-tags">
+          <span class="tag t-cash">Cash / IC — NOT on JR Pass</span>
+          <span class="tag" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)">⚠ NOT JR Pass</span>
+        </div>
+      </div>
+      <div class="step-right">
+        <div class="step-fare">¥1,800</div>
+        <div class="step-dur">~40 min</div>
+        <div class="step-aim">Depart ~20:15 latest</div>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Nankai Line is private — JR West Pass does NOT cover this.</b> Walk 5 min from JR Osaka-Namba to Nankai Namba Station. Buy Rapi:t ticket at Nankai ticket machine. ¥1,800/pax × 5 = ¥9,000. <span class="warn">Depart no later than 20:15 for 23:45 flight — KIX check-in closes 2.5 hrs before.</span> <span class="tip">Lone passenger: check domestic KIX→NRT departure time and terminal separately.</span>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function doFilter(btn, tag) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const panel = document.getElementById('jrw-panel');
+  const days  = document.querySelectorAll('.day');
+
+  if (tag === 'all') {
+    days.forEach(d => { d.classList.remove('hidden'); d.querySelectorAll('.step').forEach(s => s.classList.remove('hidden')); });
+    panel.classList.remove('hidden');
+    return;
+  }
+
+  panel.classList.toggle('hidden', tag !== 'jrwest');
+
+  days.forEach(d => {
+    const steps = d.querySelectorAll('.step');
+    let vis = 0;
+    steps.forEach(s => {
+      let show = false;
+      if (tag === 'jrwest')  show = s.querySelector('.t-jrw') !== null;
+      else if (tag === 'reserve') show = s.dataset.res === 'y';
+      else show = d.dataset.zone === tag;
+      s.classList.toggle('hidden', !show);
+      if (show) vis++;
+    });
+    d.classList.toggle('hidden', vis === 0);
+  });
+}
+</script>
+</body>
+</html>

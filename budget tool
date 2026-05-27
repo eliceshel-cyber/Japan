@@ -1,0 +1,1225 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Trash2, Edit3, X, Calendar, Tag, Plane, Hotel, Train, Compass, UtensilsCrossed, Package, Save, RefreshCw, ChevronDown, ChevronRight, Settings } from 'lucide-react';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const TRIP_START = '2026-09-15';
+const TRIP_END = '2026-10-07';
+const PARTY_SIZE = 5;
+
+const CATEGORIES = {
+  Flights: { icon: Plane, color: '#1a3a52', hex: '#1a3a52' },
+  Hotels: { icon: Hotel, color: '#7b2d26', hex: '#7b2d26' },
+  Transportation: { icon: Train, color: '#3d5a3d', hex: '#3d5a3d' },
+  Activities: { icon: Compass, color: '#b8651b', hex: '#b8651b' },
+  Food: { icon: UtensilsCrossed, color: '#5e3a6b', hex: '#5e3a6b' },
+  Other: { icon: Package, color: '#4a4a4a', hex: '#4a4a4a' },
+};
+
+const STORAGE_KEY = 'japan_trip_expenses_v9';
+const SETTINGS_KEY = 'japan_trip_settings_v9';
+
+// ============================================================================
+// PRE-POPULATED EXPENSES (from itinerary + past chats)
+// All amounts in JPY for the whole party of 5 unless noted
+// ============================================================================
+
+const DEFAULT_EXPENSES = [
+  // ============ FLIGHTS (all prepaid — placed on Sept 15) ============
+  { id: 'f1', date: '2026-09-15', category: 'Flights', desc: 'TLV → HND outbound (5 pax) — travels Sept 16', amount: 652500, source: 'confirmed', notes: 'Prepaid · part of $8,700 main flight booking (50% allocated)' },
+  { id: 'f2', date: '2026-09-15', category: 'Flights', desc: 'KIX/NRT → TLV return (5 pax) — travels Oct 6-7', amount: 652500, source: 'confirmed', notes: 'Prepaid · part of $8,700 main flight booking (50% allocated)' },
+  { id: 'f3', date: '2026-09-15', category: 'Flights', desc: 'KIX → NRT domestic (1 pax lone passenger) — travels Oct 6', amount: 7500, source: 'confirmed', notes: 'Prepaid · $50 USD Peach/Jetstar booking' },
+
+  // ============ HOTELS ============
+  { id: 'h1', date: '2026-09-16', category: 'Hotels', desc: 'Toyoko Inn Tokyo Haneda Airport (1 night)', amount: 26250, source: 'confirmed', notes: 'Confirmed booking · arrival night, in-terminal' },
+  { id: 'h2', date: '2026-09-17', category: 'Hotels', desc: 'Rimba Hotel Shinjuku via Airbnb (4 nights Sept 17–21)', amount: 191188, source: 'confirmed', notes: 'Prepaid Airbnb · ₪4,552.09 total · hosts Koji, Ryu Sugi' },
+  { id: 'h6', date: '2026-09-21', category: 'Hotels', desc: 'Okuhida Garden Hotel Yakedake (2 nights Sept 21–23) — meals included', amount: 205500, source: 'confirmed', notes: 'Confirmed · kaiseki dinner + breakfast both nights' },
+  { id: 'h8', date: '2026-09-23', category: 'Hotels', desc: 'Kiso Mikawaya Ryokan Tsumago (2 nights Sept 23–25)', amount: 119636, source: 'confirmed', notes: 'Confirmed' },
+  { id: 'h10', date: '2026-09-25', category: 'Hotels', desc: 'KABIN Gion Kyoto (formerly KABIN Minamiza) (4 nights Sept 25–29)', amount: 120573, source: 'confirmed', notes: 'Confirmed' },
+  { id: 'h14', date: '2026-09-29', category: 'Hotels', desc: 'the square hotel KANAZAWA (2 nights Sept 29 – Oct 1)', amount: 50270, source: 'confirmed', notes: 'Confirmed · 2 rooms, near Omicho Market' },
+  { id: 'h16', date: '2026-10-01', category: 'Hotels', desc: 'Onomichi Komichi 尾道小路 supported by COCOSTAY (3 nights Oct 1–4)', amount: 112073, source: 'confirmed', notes: 'Confirmed · Cat Trail hillside villa' },
+  { id: 'h19', date: '2026-10-04', category: 'Hotels', desc: 'Nishiki-en Osaka (2 nights Oct 4–6)', amount: 69422, source: 'confirmed', notes: 'Confirmed · near Namba' },
+  { id: 'h21', date: '2026-10-06', category: 'Hotels', desc: 'Toyoko Inn Narita Airport Shinkan (lone pax, 1 night)', amount: 6836, source: 'confirmed', notes: 'Confirmed · 1 person only' },
+
+  // ============ TRANSPORTATION ============
+  { id: 't1', date: '2026-09-16', category: 'Transportation', desc: 'Welcome Suica cards × 5 + initial load', amount: 15000, source: 'estimate', notes: '¥3K/pax at HND vending machines' },
+  { id: 't2', date: '2026-09-17', category: 'Transportation', desc: 'Monorail HND → Hamamatsucho + Yamanote → Shinjuku', amount: 2500, source: 'estimate', notes: 'Via Suica' },
+  { id: 't3', date: '2026-09-17', category: 'Transportation', desc: 'Tokyo metro & local transit (Day 1)', amount: 4000, source: 'estimate', notes: 'Roppongi return for Gonpachi' },
+  { id: 't4', date: '2026-09-18', category: 'Transportation', desc: 'Tokyo metro & local transit (Day 2)', amount: 4000, source: 'estimate', notes: 'Toyosu + Akihabara' },
+  { id: 't5', date: '2026-09-19', category: 'Transportation', desc: 'Tokyo metro & local transit (Day 3)', amount: 4000, source: 'estimate', notes: 'Harajuku + Nakano' },
+  { id: 't6', date: '2026-09-20', category: 'Transportation', desc: 'Tokyo metro & local transit (Day 4)', amount: 4000, source: 'estimate', notes: 'Shimokitazawa + Ikebukuro' },
+  { id: 't7', date: '2026-09-20', category: 'Transportation', desc: 'Takkyubin luggage forwarding Tokyo → Kyoto (5 bags)', amount: 12500, source: 'estimate', notes: '¥2,500/bag, CASH at 7-Eleven' },
+  { id: 't8', date: '2026-09-21', category: 'Transportation', desc: 'JR Azusa Limited Express Shinjuku → Matsumoto', amount: 33100, source: 'estimate', notes: '¥6,620/pax × 5, reserved e-ticket + Suica basic fare' },
+  { id: 't9', date: '2026-09-15', category: 'Transportation', desc: 'Toyota Rent-a-Car Serena 4-day (Matsumoto → Nagoya one-way) — pickup Sept 21', amount: 112000, source: 'confirmed', notes: 'Prepaid · booked direct with Toyota · incl. one-way fee. Tolls settled separately at drop-off (ETC)' },
+  { id: 't10', date: '2026-09-22', category: 'Transportation', desc: 'Akandana parking + Kamikochi shuttle bus × 5', amount: 13000, source: 'estimate', notes: '¥600 parking + ¥2.4K/pax shuttle RT' },
+  { id: 't11', date: '2026-09-25', category: 'Transportation', desc: 'Car tolls Matsumoto → Nagoya (settled at drop-off)', amount: 15000, source: 'estimate', notes: 'Highway tolls via ETC' },
+  { id: 't12', date: '2026-09-25', category: 'Transportation', desc: 'Tokaido Shinkansen Nagoya → Kyoto (SmartEX, non-reserved)', amount: 23950, source: 'estimate', notes: '¥4,790/pax × 5' },
+  { id: 't13', date: '2026-09-25', category: 'Transportation', desc: 'Bus/taxi Kyoto Station → KABIN Gion', amount: 2000, source: 'estimate', notes: 'Bus 100/206 or split taxi' },
+  { id: 't14', date: '2026-09-25', category: 'Transportation', desc: 'E-bike rental Kamo River sunset ride', amount: 10000, source: 'estimate', notes: '¥2K/pax × 5' },
+  { id: 't15', date: '2026-09-26', category: 'Transportation', desc: 'Kyoto subway + JR Nara Line (Day 2)', amount: 3500, source: 'estimate', notes: 'Nijo Castle + Fushimi Inari' },
+  { id: 't16', date: '2026-09-27', category: 'Transportation', desc: 'Eizan Railway to Kurama + return', amount: 4500, source: 'estimate', notes: '¥900/pax round trip' },
+  { id: 't17', date: '2026-09-28', category: 'Transportation', desc: 'JR San-in Line to Saga-Arashiyama + local', amount: 3500, source: 'estimate', notes: '' },
+  { id: 't18', date: '2026-09-28', category: 'Transportation', desc: 'Takkyubin luggage forwarding Kyoto → Onomichi (5 bags)', amount: 12500, source: 'estimate', notes: 'At KABIN front desk' },
+  { id: 't19', date: '2026-09-29', category: 'Transportation', desc: 'JR West All Area Pass × 5 (7 days, activated today)', amount: 130000, source: 'estimate', notes: '¥26K/pax — covers Sept 29, Oct 1, 3, 4, 5' },
+  { id: 't20', date: '2026-10-02', category: 'Transportation', desc: 'Onomichi → Mukaishima ferry + Shimanami e-bike rental', amount: 35550, source: 'estimate', notes: '¥110 ferry + ¥7K/pax e-bike day' },
+  { id: 't21', date: '2026-10-03', category: 'Transportation', desc: 'Local taxi/bus Onomichi ↔ Shin-Onomichi + Miyajima ferry', amount: 5000, source: 'estimate', notes: 'Miyajima ferry covered by JR West Pass' },
+  { id: 't22', date: '2026-10-03', category: 'Transportation', desc: 'Takkyubin luggage forwarding Onomichi → Osaka (5 bags)', amount: 12500, source: 'estimate', notes: 'Or carry bags Oct 4 direct Shinkansen' },
+  { id: 't23', date: '2026-10-04', category: 'Transportation', desc: 'Osaka Metro Midosuji + local (Day 1)', amount: 3500, source: 'estimate', notes: 'Namba area + teamLab Botanical' },
+  { id: 't24', date: '2026-10-05', category: 'Transportation', desc: 'JR Loop to USJ + return', amount: 3500, source: 'estimate', notes: 'Covered by JR West Pass last day' },
+  { id: 't25', date: '2026-10-06', category: 'Transportation', desc: 'JR Special Rapid Osaka → Himeji RT', amount: 14900, source: 'estimate', notes: '¥1,490 × 5 × 2 directions' },
+  { id: 't26', date: '2026-10-06', category: 'Transportation', desc: 'Nankai Rapi:t Namba → KIX', amount: 9000, source: 'estimate', notes: '¥1,800/pax × 5, NOT on JR pass' },
+
+  // ============ ACTIVITIES ============
+  { id: 'a1', date: '2026-09-17', category: 'Activities', desc: 'Gonpachi Nishi-Azabu (Kill Bill restaurant) dinner', amount: 17500, source: 'estimate', notes: 'Book Jun 20' },
+  { id: 'a2', date: '2026-09-17', category: 'Activities', desc: 'Golden Gai bar crawl (3–4 bars × 5)', amount: 12000, source: 'estimate', notes: '¥600-800/bar charge' },
+  { id: 'a3', date: '2026-09-18', category: 'Activities', desc: 'teamLab Planets Tokyo (Toyosu)', amount: 19000, source: 'estimate', notes: '¥3,800/pax pre-booked' },
+  { id: 'a4', date: '2026-09-18', category: 'Activities', desc: 'Samurai Restaurant Kabukicho (optional)', amount: 45000, source: 'estimate', notes: '¥9,000/pax advance — drop if not done' },
+  { id: 'a5', date: '2026-09-18', category: 'Activities', desc: 'Akihabara arcades + Super Potato shopping budget', amount: 15000, source: 'estimate', notes: 'Family discretionary' },
+  { id: 'a6', date: '2026-09-19', category: 'Activities', desc: 'Mame-Shiba Cafe Takeshita', amount: 5000, source: 'estimate', notes: '30-min session × 5' },
+  { id: 'a7', date: '2026-09-19', category: 'Activities', desc: 'Capybara Cafe Moffu', amount: 15000, source: 'estimate', notes: '¥3K/pax — book Sept 5' },
+  { id: 'a8', date: '2026-09-19', category: 'Activities', desc: 'Kawaii Monster Land (underground Takeshita)', amount: 15000, source: 'estimate', notes: '¥3K/pax walk-in' },
+  { id: 'a9', date: '2026-09-20', category: 'Activities', desc: 'Shimokitazawa + Fukuro Matsuri (free, +discretionary)', amount: 5000, source: 'estimate', notes: 'Vintage shopping budget' },
+  { id: 'a10', date: '2026-09-21', category: 'Activities', desc: 'Matsumoto Castle e-tickets', amount: 3500, source: 'estimate', notes: '¥700/pax pre-booked Aug 22' },
+  { id: 'a22', date: '2026-09-22', category: 'Activities', desc: 'Kamikochi hike (trail free, snacks/onsen towels)', amount: 3000, source: 'estimate', notes: '' },
+  { id: 'a11', date: '2026-09-24', category: 'Activities', desc: 'Nakasendo walking guide (Magome → Tsumago)', amount: 15000, source: 'estimate', notes: 'Via Kiso Mikawaya, confirm Aug 22' },
+  { id: 'a12', date: '2026-09-26', category: 'Activities', desc: 'Nijo Castle entry', amount: 6500, source: 'estimate', notes: '¥1,300/pax' },
+  { id: 'a13', date: '2026-09-26', category: 'Activities', desc: 'Samurai & Ninja Museum Kyoto', amount: 17500, source: 'estimate', notes: '¥3,500/pax' },
+  { id: 'a14', date: '2026-09-28', category: 'Activities', desc: 'Toei Kyoto Studio Park', amount: 12000, source: 'estimate', notes: '¥2,400/pax walk-up' },
+  { id: 'a15', date: '2026-09-28', category: 'Activities', desc: 'Tenryu-ji + Adashino Nenbutsuji entry', amount: 5000, source: 'estimate', notes: '¥1K/pax combined' },
+  { id: 'a23', date: '2026-09-28', category: 'Activities', desc: 'Ginkaku-ji (split-group option)', amount: 2500, source: 'estimate', notes: '¥500/pax if doing the east-side split' },
+  { id: 'a16', date: '2026-09-30', category: 'Activities', desc: 'Myoryuji Ninja Temple reserved tour', amount: 6000, source: 'estimate', notes: '¥1,200/pax CASH at door' },
+  { id: 'a17', date: '2026-09-30', category: 'Activities', desc: 'Kenroku-en Garden', amount: 1600, source: 'estimate', notes: '¥320/pax' },
+  { id: 'a18', date: '2026-09-30', category: 'Activities', desc: '21st Century Museum (underground section)', amount: 2150, source: 'estimate', notes: 'Book Aug 26' },
+  { id: 'a19', date: '2026-10-01', category: 'Activities', desc: 'Senkoji Ropeway Onomichi', amount: 3500, source: 'estimate', notes: '¥700/pax' },
+  { id: 'a20', date: '2026-10-03', category: 'Activities', desc: 'Hiroshima Peace Memorial Museum', amount: 1000, source: 'estimate', notes: '¥200/pax pre-booked' },
+  { id: 'a21', date: '2026-10-03', category: 'Activities', desc: 'Itsukushima Shrine Miyajima', amount: 1500, source: 'estimate', notes: '¥300/pax' },
+  { id: 'a24', date: '2026-10-04', category: 'Activities', desc: 'teamLab Botanical Garden Osaka', amount: 9000, source: 'estimate', notes: '¥1,800/pax — online only' },
+  { id: 'a25', date: '2026-10-05', category: 'Activities', desc: 'USJ tickets + Express Pass (Nintendo + HP + DK)', amount: 90000, source: 'estimate', notes: '¥18K/pax — book Aug 3' },
+  { id: 'a26', date: '2026-10-05', category: 'Activities', desc: 'Hedgehog Cafe Harry Wood Namba', amount: 9000, source: 'estimate', notes: '¥1,800/pax' },
+  { id: 'a27', date: '2026-10-06', category: 'Activities', desc: 'Himeji Castle entry', amount: 12500, source: 'estimate', notes: '¥2,500/pax' },
+
+  // ============ FOOD (not yet estimated — placeholder baseline, edit freely) ============
+  { id: 'fd1', date: '2026-09-16', category: 'Food', desc: 'Arrival night light dinner / konbini', amount: 5000, source: 'estimate', notes: 'Late arrival 22:20' },
+  { id: 'fd2', date: '2026-09-17', category: 'Food', desc: 'Breakfasts + lunch (dinner = Gonpachi above)', amount: 15000, source: 'estimate', notes: '¥3K/pax breakfast+lunch' },
+  { id: 'fd3', date: '2026-09-18', category: 'Food', desc: 'Breakfasts + lunch (Ramen Nagi dinner below)', amount: 15000, source: 'estimate', notes: '' },
+  { id: 'fd3b', date: '2026-09-18', category: 'Food', desc: 'Ramen Nagi Golden Gai 2F', amount: 6500, source: 'estimate', notes: '¥1,300/pax' },
+  { id: 'fd4', date: '2026-09-19', category: 'Food', desc: 'Breakfasts + Omoide Yokocho dinner', amount: 25000, source: 'estimate', notes: 'Yakitori alley, cash only' },
+  { id: 'fd5', date: '2026-09-20', category: 'Food', desc: 'Meals Day 4 Tokyo', amount: 25000, source: 'estimate', notes: '' },
+  { id: 'fd6', date: '2026-09-21', category: 'Food', desc: 'Shinshu soba lunch near Matsumoto Castle', amount: 6000, source: 'estimate', notes: '¥1,200/pax — dinner = kaiseki incl.' },
+  { id: 'fd7', date: '2026-09-22', category: 'Food', desc: 'Kamikochi trail lunch / bento', amount: 7500, source: 'estimate', notes: 'Hotel breakfast + dinner incl.' },
+  { id: 'fd8', date: '2026-09-23', category: 'Food', desc: 'Lunch en route (Narai post town or similar)', amount: 8000, source: 'estimate', notes: 'Ryokan dinner likely incl.' },
+  { id: 'fd9', date: '2026-09-24', category: 'Food', desc: 'Teahouse trail snacks (hoba miso, gohei mochi)', amount: 4000, source: 'estimate', notes: '¥300-500/snack, cash' },
+  { id: 'fd10', date: '2026-09-25', category: 'Food', desc: 'Breakfast + Gion Kawamoto sushi dinner', amount: 20000, source: 'estimate', notes: 'Sushi ¥3K/pax' },
+  { id: 'fd11', date: '2026-09-26', category: 'Food', desc: 'Meals incl. Torisei sake brewery lunch + Pontocho river deck', amount: 30000, source: 'estimate', notes: 'Fushimi sake + river dinner' },
+  { id: 'fd12', date: '2026-09-27', category: 'Food', desc: 'Kibune Hirobun nagashi somen + dinner', amount: 22000, source: 'estimate', notes: '¥2K/pax somen + Kyoto dinner' },
+  { id: 'fd13', date: '2026-09-28', category: 'Food', desc: 'Meals + Nishiki Market grazing', amount: 22000, source: 'estimate', notes: 'Free tastes + ¥4K/pax meals' },
+  { id: 'fd14', date: '2026-09-29', category: 'Food', desc: 'Ekiben on train + Omicho Market dinner', amount: 18000, source: 'estimate', notes: 'Nodoguro/shiroebi at Omicho' },
+  { id: 'fd15', date: '2026-09-30', category: 'Food', desc: 'Meals incl. Kourin Sushi lunch', amount: 20000, source: 'estimate', notes: '¥1,100 sushi set/pax' },
+  { id: 'fd16', date: '2026-10-01', category: 'Food', desc: 'Ekiben + Onomichi arrival dinner', amount: 18000, source: 'estimate', notes: '' },
+  { id: 'fd17', date: '2026-10-02', category: 'Food', desc: 'Port seafood lunch + dinner Onomichi', amount: 22000, source: 'estimate', notes: 'Setoda lemon ice cream + dock seafood' },
+  { id: 'fd18', date: '2026-10-03', category: 'Food', desc: 'Nagataya okonomiyaki dinner + Hiroshima lunch', amount: 18000, source: 'estimate', notes: '¥1.5K/pax okonomiyaki + ¥2K/pax lunch' },
+  { id: 'fd19', date: '2026-10-04', category: 'Food', desc: 'Meals + Dotonbori street food', amount: 22000, source: 'estimate', notes: '' },
+  { id: 'fd20', date: '2026-10-05', category: 'Food', desc: 'USJ meals + New World Shinsaibashi dinner', amount: 30000, source: 'estimate', notes: 'Park food expensive + ¥3.5K/pax dinner' },
+  { id: 'fd21', date: '2026-10-06', category: 'Food', desc: 'Last day meals incl. KIX', amount: 12000, source: 'estimate', notes: 'Lunch in Himeji + airport snacks' },
+
+  // ============ OTHER ============
+  { id: 'o1', date: '2026-09-15', category: 'Other', desc: 'Travel insurance × 5 (covers Sept 16 – Oct 7)', amount: 28500, source: 'confirmed', notes: 'Prepaid · $190 USD' },
+  { id: 'o2', date: '2026-09-18', category: 'Other', desc: 'Pocket wifi / SIM cards × 5 (or 1-2 shared)', amount: 10000, source: 'estimate', notes: '21-day rental' },
+];
+
+const DEFAULT_SETTINGS = {
+  usdRate: 150,  // 1 USD = X JPY
+  ilsRate: 42,   // 1 ILS = X JPY
+  displayCurrency: 'JPY',
+  partySize: 5,
+};
+
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
+const formatDate = (iso) => {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+const formatDateLong = (iso) => {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+};
+
+const formatMoney = (jpy, currency, settings) => {
+  if (currency === 'JPY') {
+    return '¥' + Math.round(jpy).toLocaleString();
+  }
+  if (currency === 'USD') {
+    const v = jpy / settings.usdRate;
+    return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  if (currency === 'ILS') {
+    const v = jpy / settings.ilsRate;
+    return '₪' + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  return jpy;
+};
+
+const getDateRange = (start, end) => {
+  const dates = [];
+  const cur = new Date(start + 'T00:00:00');
+  const last = new Date(end + 'T00:00:00');
+  while (cur <= last) {
+    dates.push(cur.toISOString().split('T')[0]);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+};
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export default function JapanBudgetTool() {
+  const [expenses, setExpenses] = useState([]);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [loaded, setLoaded] = useState(false);
+  const [view, setView] = useState('date'); // 'date' | 'category' | 'matrix'
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [expandedDates, setExpandedDates] = useState(new Set());
+
+  // ===== LOAD FROM STORAGE =====
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await window.storage.get(STORAGE_KEY);
+        if (stored && stored.value) {
+          setExpenses(JSON.parse(stored.value));
+        } else {
+          setExpenses(DEFAULT_EXPENSES);
+        }
+      } catch (e) {
+        setExpenses(DEFAULT_EXPENSES);
+      }
+      try {
+        const s = await window.storage.get(SETTINGS_KEY);
+        if (s && s.value) setSettings(JSON.parse(s.value));
+      } catch (e) { /* default */ }
+      setLoaded(true);
+    })();
+  }, []);
+
+  // ===== SAVE ON CHANGE =====
+  useEffect(() => {
+    if (!loaded) return;
+    (async () => {
+      try {
+        await window.storage.set(STORAGE_KEY, JSON.stringify(expenses));
+      } catch (e) { console.error('save failed', e); }
+    })();
+  }, [expenses, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    (async () => {
+      try { await window.storage.set(SETTINGS_KEY, JSON.stringify(settings)); }
+      catch (e) { console.error('settings save failed', e); }
+    })();
+  }, [settings, loaded]);
+
+  // ===== DERIVED =====
+  const allDates = useMemo(() => getDateRange(TRIP_START, TRIP_END), []);
+
+  const expensesByDate = useMemo(() => {
+    const map = {};
+    allDates.forEach(d => { map[d] = []; });
+    expenses.forEach(e => {
+      if (!map[e.date]) map[e.date] = [];
+      map[e.date].push(e);
+    });
+    return map;
+  }, [expenses, allDates]);
+
+  const totalsByCategory = useMemo(() => {
+    const t = {};
+    Object.keys(CATEGORIES).forEach(c => { t[c] = 0; });
+    expenses.forEach(e => {
+      if (t[e.category] === undefined) t[e.category] = 0;
+      t[e.category] += Number(e.amount) || 0;
+    });
+    return t;
+  }, [expenses]);
+
+  const totalsByDate = useMemo(() => {
+    const t = {};
+    Object.entries(expensesByDate).forEach(([d, arr]) => {
+      t[d] = arr.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    });
+    return t;
+  }, [expensesByDate]);
+
+  const grandTotal = useMemo(() =>
+    expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0),
+    [expenses]
+  );
+
+  const confirmedTotal = useMemo(() =>
+    expenses.filter(e => e.source === 'confirmed').reduce((s, e) => s + (Number(e.amount) || 0), 0),
+    [expenses]
+  );
+
+  const estimatedTotal = useMemo(() =>
+    expenses.filter(e => e.source !== 'confirmed').reduce((s, e) => s + (Number(e.amount) || 0), 0),
+    [expenses]
+  );
+
+  // ===== HANDLERS =====
+  const addExpense = (exp) => {
+    setExpenses(prev => [...prev, { ...exp, id: uid(), source: exp.source || 'manual' }]);
+  };
+
+  const updateExpense = (id, updates) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const deleteExpense = (id) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  };
+
+  const resetToDefaults = () => {
+    if (confirm('Reset all expenses to default itinerary estimates? Your changes and uploads will be lost.')) {
+      setExpenses(DEFAULT_EXPENSES);
+    }
+  };
+
+  const toggleDate = (d) => {
+    setExpandedDates(prev => {
+      const next = new Set(prev);
+      if (next.has(d)) next.delete(d); else next.add(d);
+      return next;
+    });
+  };
+
+  const expandAll = () => setExpandedDates(new Set(allDates));
+  const collapseAll = () => setExpandedDates(new Set());
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
+  if (!loaded) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f5f1e8',
+        fontFamily: 'Manrope, sans-serif'
+      }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #d0c8b3', borderTopColor: '#1a3a52', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.root}>
+      <style>{globalCss}</style>
+
+      {/* ============ HEADER ============ */}
+      <header style={styles.header}>
+        <div style={styles.headerInner}>
+          <div style={styles.headerLeft}>
+            <div style={styles.stamp}>日本</div>
+            <div>
+              <h1 style={styles.title}>Japan 2026 — Budget Tracker</h1>
+              <p style={styles.subtitle}>Sept 16 – Oct 7 · 5 adults · {expenses.length} line items</p>
+            </div>
+          </div>
+          <div style={styles.headerRight}>
+            <button style={styles.iconBtn} onClick={() => setShowSettings(true)} title="Settings">
+              <Settings size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* TOTALS BAR */}
+        <div style={styles.totalsBar}>
+          {/* Grand total + confirmed/estimated split */}
+          <div style={styles.totalsTop}>
+            <div style={styles.grandTotal}>
+              <div style={styles.grandLabel}>Total</div>
+              <div style={styles.grandValue}>{formatMoney(grandTotal, settings.displayCurrency, settings)}</div>
+              <div style={styles.grandSubValues}>
+                {settings.displayCurrency !== 'JPY' && <span>{formatMoney(grandTotal, 'JPY', settings)}</span>}
+                {settings.displayCurrency !== 'USD' && <span>{formatMoney(grandTotal, 'USD', settings)}</span>}
+                {settings.displayCurrency !== 'ILS' && <span>{formatMoney(grandTotal, 'ILS', settings)}</span>}
+                <span style={{ opacity: 0.6 }}>· {formatMoney(grandTotal / settings.partySize, settings.displayCurrency, settings)}/pax</span>
+              </div>
+            </div>
+            <div style={styles.splitBadges}>
+              <div style={styles.splitConfirmed}>
+                <div style={styles.splitLabel}>✓ Confirmed</div>
+                <div style={styles.splitAmount}>{formatMoney(confirmedTotal, settings.displayCurrency, settings)}</div>
+              </div>
+              <div style={styles.splitEstimated}>
+                <div style={styles.splitLabel}>~ Estimated</div>
+                <div style={styles.splitAmount}>{formatMoney(estimatedTotal, settings.displayCurrency, settings)}</div>
+              </div>
+            </div>
+          </div>
+          {/* Category pills — stacked full width on mobile */}
+          <div style={styles.categoryPills}>
+            {Object.entries(CATEGORIES).map(([cat, conf]) => {
+              const Icon = conf.icon;
+              const amt = totalsByCategory[cat] || 0;
+              if (amt === 0 && cat === 'Other') return null;
+              const catConfirmed = expenses
+                .filter(e => e.category === cat && e.source === 'confirmed')
+                .reduce((s, e) => s + Number(e.amount), 0);
+              const hasEstimates = amt > catConfirmed;
+              return (
+                <div key={cat} style={{ ...styles.catPill, borderLeftColor: conf.hex }}>
+                  <Icon size={13} style={{ color: conf.hex, flexShrink: 0 }} />
+                  <span style={styles.catPillName}>{cat}</span>
+                  <div style={styles.catPillRight}>
+                    {catConfirmed > 0 && (
+                      <span style={styles.catPillConfirmed}>{formatMoney(catConfirmed, settings.displayCurrency, settings)} ✓</span>
+                    )}
+                    {hasEstimates && (
+                      <span style={styles.catPillEst}>{formatMoney(amt - catConfirmed, settings.displayCurrency, settings)} ~</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* ============ CONTROLS BAR ============ */}
+      <div style={styles.controls}>
+        <div style={styles.viewToggle}>
+          {[
+            { id: 'date', label: 'By Date' },
+            { id: 'category', label: 'By Category' },
+          ].map(v => (
+            <button
+              key={v.id}
+              onClick={() => setView(v.id)}
+              style={{
+                ...styles.viewBtn,
+                ...(view === v.id ? styles.viewBtnActive : {})
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={styles.actions}>
+          {view === 'date' && (
+            <>
+              <button style={styles.smallBtn} onClick={expandAll}>Expand all</button>
+              <button style={styles.smallBtn} onClick={collapseAll}>Collapse</button>
+            </>
+          )}
+          <button style={styles.addBtn} onClick={() => setShowAddModal(true)}>
+            <Plus size={15} /> Add expense
+          </button>
+        </div>
+      </div>
+
+      {/* ============ MAIN VIEW ============ */}
+      <main style={styles.main}>
+        {view === 'date' && (
+          <DateView
+            allDates={allDates}
+            expensesByDate={expensesByDate}
+            totalsByDate={totalsByDate}
+            expandedDates={expandedDates}
+            toggleDate={toggleDate}
+            settings={settings}
+            onEdit={setEditingExpense}
+            onDelete={deleteExpense}
+          />
+        )}
+        {view === 'category' && (
+          <CategoryView
+            expenses={expenses}
+            settings={settings}
+            onEdit={setEditingExpense}
+            onDelete={deleteExpense}
+          />
+        )}
+      </main>
+
+      {/* FOOTER */}
+      <footer style={styles.footer}>
+        <div>
+          Estimates are starting points — replace with actuals as you book. Pre-loaded from your master itinerary (v6) and past planning chats.
+        </div>
+        <button style={styles.resetBtn} onClick={resetToDefaults}>
+          <RefreshCw size={12} /> Reset to itinerary defaults
+        </button>
+      </footer>
+
+      {/* ============ MODALS ============ */}
+      {(showAddModal || editingExpense) && (
+        <ExpenseModal
+          expense={editingExpense}
+          onClose={() => { setEditingExpense(null); setShowAddModal(false); }}
+          onSave={(exp) => {
+            if (editingExpense) updateExpense(editingExpense.id, exp);
+            else addExpense(exp);
+            setEditingExpense(null);
+            setShowAddModal(false);
+          }}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal
+          settings={settings}
+          onClose={() => setShowSettings(false)}
+          onSave={(s) => { setSettings(s); setShowSettings(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// VIEWS
+// ============================================================================
+
+function DateView({ allDates, expensesByDate, totalsByDate, expandedDates, toggleDate, settings, onEdit, onDelete }) {
+  return (
+    <div style={styles.dateList}>
+      {allDates.map(d => {
+        const items = expensesByDate[d] || [];
+        const total = totalsByDate[d] || 0;
+        const expanded = expandedDates.has(d);
+        if (items.length === 0) return (
+          <div key={d} style={{ ...styles.dateCard, opacity: 0.4 }}>
+            <div style={styles.dateHeader}>
+              <span style={styles.dateLabel}>{formatDate(d)}</span>
+              <span style={{ ...styles.dateTotal, opacity: 0.5 }}>no expenses</span>
+            </div>
+          </div>
+        );
+        return (
+          <div key={d} style={styles.dateCard}>
+            <button style={styles.dateHeader} onClick={() => toggleDate(d)}>
+              <div style={styles.dateHeaderLeft}>
+                {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <span style={styles.dateLabel}>{formatDate(d)}</span>
+                <span style={styles.dateItemCount}>{items.length} item{items.length === 1 ? '' : 's'}</span>
+              </div>
+              <span style={styles.dateTotal}>{formatMoney(total, settings.displayCurrency, settings)}</span>
+            </button>
+            {expanded && (
+              <div style={styles.lineItems}>
+                {items.map(e => (
+                  <LineItem key={e.id} expense={e} settings={settings} onEdit={onEdit} onDelete={onDelete} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CategoryView({ expenses, settings, onEdit, onDelete }) {
+  return (
+    <div style={styles.catList}>
+      {Object.entries(CATEGORIES).map(([cat, conf]) => {
+        const items = expenses.filter(e => e.category === cat);
+        if (items.length === 0 && cat === 'Other') return null;
+        const total = items.reduce((s, e) => s + Number(e.amount), 0);
+        const Icon = conf.icon;
+        return (
+          <div key={cat} style={{ ...styles.catCard, borderTopColor: conf.hex }}>
+            <div style={styles.catCardHeader}>
+              <div style={styles.catCardLeft}>
+                <Icon size={20} style={{ color: conf.hex }} />
+                <h3 style={styles.catCardTitle}>{cat}</h3>
+                <span style={styles.catCardCount}>{items.length}</span>
+              </div>
+              <div style={{ ...styles.catCardTotal, color: conf.hex }}>
+                {formatMoney(total, settings.displayCurrency, settings)}
+              </div>
+            </div>
+            <div style={styles.catLineItems}>
+              {items.sort((a, b) => a.date.localeCompare(b.date)).map(e => (
+                <LineItem key={e.id} expense={e} settings={settings} onEdit={onEdit} onDelete={onDelete} showDate />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MatrixView({ allDates, expenses, settings }) {
+  const cats = Object.keys(CATEGORIES);
+  const matrix = {};
+  allDates.forEach(d => {
+    matrix[d] = {};
+    cats.forEach(c => { matrix[d][c] = 0; });
+  });
+  expenses.forEach(e => {
+    if (!matrix[e.date]) matrix[e.date] = {};
+    matrix[e.date][e.category] = (matrix[e.date][e.category] || 0) + Number(e.amount);
+  });
+
+  const colTotals = {};
+  cats.forEach(c => {
+    colTotals[c] = allDates.reduce((s, d) => s + (matrix[d][c] || 0), 0);
+  });
+  const grand = Object.values(colTotals).reduce((s, v) => s + v, 0);
+
+  return (
+    <div style={styles.matrixWrap}>
+      <table style={styles.matrix}>
+        <thead>
+          <tr>
+            <th style={styles.matrixCorner}>Date</th>
+            {cats.map(c => {
+              const conf = CATEGORIES[c];
+              const Icon = conf.icon;
+              return (
+                <th key={c} style={{ ...styles.matrixHead, color: conf.hex }}>
+                  <Icon size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  {c}
+                </th>
+              );
+            })}
+            <th style={styles.matrixHeadTotal}>Day total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {allDates.map(d => {
+            const dayTotal = cats.reduce((s, c) => s + (matrix[d][c] || 0), 0);
+            return (
+              <tr key={d}>
+                <td style={styles.matrixDateCell}>{formatDate(d)}</td>
+                {cats.map(c => {
+                  const v = matrix[d][c] || 0;
+                  return (
+                    <td key={c} style={{ ...styles.matrixCell, opacity: v === 0 ? 0.2 : 1 }}>
+                      {v === 0 ? '—' : formatMoney(v, settings.displayCurrency, settings)}
+                    </td>
+                  );
+                })}
+                <td style={styles.matrixDayTotal}>{dayTotal === 0 ? '—' : formatMoney(dayTotal, settings.displayCurrency, settings)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style={styles.matrixFootLabel}>Total</td>
+            {cats.map(c => (
+              <td key={c} style={{ ...styles.matrixFootCell, color: CATEGORIES[c].hex }}>
+                {formatMoney(colTotals[c] || 0, settings.displayCurrency, settings)}
+              </td>
+            ))}
+            <td style={styles.matrixGrand}>{formatMoney(grand, settings.displayCurrency, settings)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================================
+// LINE ITEM
+// ============================================================================
+
+function LineItem({ expense, settings, onEdit, onDelete, showDate }) {
+  const conf = CATEGORIES[expense.category] || CATEGORIES.Other;
+  const Icon = conf.icon;
+  const hasBadge = expense.source === 'confirmed' || expense.source === 'uploaded' || expense.source === 'manual';
+  const showMeta = hasBadge || expense.notes || showDate;
+  return (
+    <div style={styles.lineItem}>
+      <div style={{ ...styles.lineDot, background: conf.hex }} />
+      <div style={styles.lineMain}>
+        <div style={styles.lineTop}>
+          <Icon size={12} style={{ color: conf.hex, flexShrink: 0, marginTop: 3 }} />
+          <span style={styles.lineDesc}>{expense.desc}</span>
+        </div>
+        {showMeta && (
+          <div style={styles.lineMeta}>
+            {expense.source === 'confirmed' && <span style={styles.badgeConfirmed}>confirmed</span>}
+            {expense.source === 'uploaded' && <span style={styles.badgeUploaded}>uploaded</span>}
+            {expense.source === 'manual' && <span style={styles.badgeManual}>manual</span>}
+            {showDate && <span style={styles.lineDate}>{formatDate(expense.date)}</span>}
+            {expense.notes && <span style={styles.lineNotes}>{expense.notes}</span>}
+          </div>
+        )}
+      </div>
+      <div style={styles.lineAmount}>{formatMoney(expense.amount, settings.displayCurrency, settings)}</div>
+      <div style={styles.lineActions}>
+        <button style={styles.iconBtnSm} onClick={() => onEdit(expense)} title="Edit"><Edit3 size={12} /></button>
+        <button style={styles.iconBtnSm} onClick={() => { if (confirm('Delete this expense?')) onDelete(expense.id); }} title="Delete"><Trash2 size={12} /></button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MODALS
+// ============================================================================
+
+function ExpenseModal({ expense, onClose, onSave }) {
+  const [form, setForm] = useState(expense || {
+    date: TRIP_START,
+    category: 'Food',
+    desc: '',
+    amount: 0,
+    notes: ''
+  });
+
+  const handleSubmit = () => {
+    if (!form.desc.trim()) { alert('Description is required.'); return; }
+    if (!form.amount || isNaN(Number(form.amount))) { alert('Valid amount in JPY is required.'); return; }
+    onSave({ ...form, amount: Math.round(Number(form.amount)) });
+  };
+
+  return (
+    <div style={styles.modalBg} onClick={onClose}>
+      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalHead}>
+          <h2 style={styles.modalTitle}>{expense ? 'Edit expense' : 'Add expense'}</h2>
+          <button style={styles.iconBtn} onClick={onClose}><X size={16} /></button>
+        </div>
+        <div style={styles.formGrid}>
+          <label style={styles.label}>
+            Date
+            <input type="date" value={form.date} min={TRIP_START} max={TRIP_END}
+              onChange={e => setForm({ ...form, date: e.target.value })}
+              style={styles.input} />
+          </label>
+          <label style={styles.label}>
+            Category
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={styles.input}>
+              {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label style={{ ...styles.label, gridColumn: '1 / -1' }}>
+            Description
+            <input type="text" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })}
+              placeholder="e.g. Sushi dinner, Kyoto" style={styles.input} />
+          </label>
+          <label style={styles.label}>
+            Amount in JPY (whole group)
+            <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
+              placeholder="e.g. 12500" style={styles.input} />
+          </label>
+          <label style={styles.label}>
+            Notes (optional)
+            <input type="text" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })}
+              placeholder="vendor, payment method, etc." style={styles.input} />
+          </label>
+        </div>
+        <div style={styles.modalActions}>
+          <button style={styles.btnSecondary} onClick={onClose}>Cancel</button>
+          <button style={styles.btnPrimary} onClick={handleSubmit}>
+            <Save size={14} /> {expense ? 'Save changes' : 'Add expense'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({ settings, onClose, onSave }) {
+  const [form, setForm] = useState(settings);
+  return (
+    <div style={styles.modalBg} onClick={onClose}>
+      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalHead}>
+          <h2 style={styles.modalTitle}>Settings</h2>
+          <button style={styles.iconBtn} onClick={onClose}><X size={16} /></button>
+        </div>
+        <div style={styles.formGrid}>
+          <label style={styles.label}>
+            Display currency
+            <select value={form.displayCurrency} onChange={e => setForm({ ...form, displayCurrency: e.target.value })} style={styles.input}>
+              <option value="JPY">JPY (¥)</option>
+              <option value="USD">USD ($)</option>
+              <option value="ILS">ILS (₪)</option>
+            </select>
+          </label>
+          <label style={styles.label}>
+            Party size
+            <input type="number" value={form.partySize} onChange={e => setForm({ ...form, partySize: Number(e.target.value) || 1 })} style={styles.input} />
+          </label>
+          <label style={styles.label}>
+            1 USD = ? JPY
+            <input type="number" value={form.usdRate} onChange={e => setForm({ ...form, usdRate: Number(e.target.value) || 1 })} style={styles.input} />
+          </label>
+          <label style={styles.label}>
+            1 ILS = ? JPY
+            <input type="number" value={form.ilsRate} onChange={e => setForm({ ...form, ilsRate: Number(e.target.value) || 1 })} style={styles.input} />
+          </label>
+        </div>
+        <div style={styles.modalActions}>
+          <button style={styles.btnSecondary} onClick={onClose}>Cancel</button>
+          <button style={styles.btnPrimary} onClick={() => onSave(form)}><Save size={14} /> Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// STYLES
+// ============================================================================
+
+const globalCss = `
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+`;
+
+const styles = {
+  root: {
+    minHeight: '100vh',
+    background: 'linear-gradient(180deg, #f5f1e8 0%, #ede6d3 100%)',
+    fontFamily: "'Manrope', sans-serif",
+    color: '#1a1a1a',
+    paddingBottom: 80,
+  },
+  header: {
+    background: '#1a1a1a',
+    color: '#f5f1e8',
+    padding: '32px 24px 24px',
+    borderBottom: '4px solid #d04231',
+  },
+  headerInner: {
+    maxWidth: 1200,
+    margin: '0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  headerLeft: { display: 'flex', alignItems: 'center', gap: 16 },
+  stamp: {
+    fontFamily: "'Fraunces', serif",
+    background: '#d04231',
+    color: '#f5f1e8',
+    padding: '8px 14px',
+    fontSize: 28,
+    fontWeight: 500,
+    letterSpacing: 1,
+    transform: 'rotate(-2deg)',
+    boxShadow: '2px 3px 0 rgba(0,0,0,0.3)',
+  },
+  title: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 500,
+    fontSize: 26,
+    margin: 0,
+    letterSpacing: -0.5,
+  },
+  subtitle: { fontSize: 13, opacity: 0.7, margin: '4px 0 0', letterSpacing: 0.3 },
+  headerRight: { display: 'flex', gap: 8 },
+  totalsBar: {
+    maxWidth: 1200,
+    margin: '20px auto 0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+  },
+  totalsTop: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: 20,
+    flexWrap: 'wrap',
+  },
+  grandTotal: {
+    flex: '1 1 auto',
+  },
+  grandLabel: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 2, opacity: 0.6 },
+  grandValue: {
+    fontFamily: "'Fraunces', serif",
+    fontSize: 40,
+    fontWeight: 500,
+    lineHeight: 1,
+    marginTop: 6,
+    color: '#f5f1e8',
+  },
+  grandSubValues: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    marginTop: 8,
+    opacity: 0.7,
+    display: 'flex',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  splitBadges: {
+    display: 'flex',
+    gap: 12,
+    paddingBottom: 4,
+  },
+  splitConfirmed: {
+    background: 'rgba(61,90,61,0.35)',
+    border: '1px solid rgba(61,90,61,0.6)',
+    padding: '6px 12px',
+    borderRadius: 2,
+  },
+  splitEstimated: {
+    background: 'rgba(184,101,27,0.25)',
+    border: '1px solid rgba(184,101,27,0.5)',
+    padding: '6px 12px',
+    borderRadius: 2,
+  },
+  splitLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    opacity: 0.8,
+    marginBottom: 3,
+  },
+  splitAmount: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 14,
+    fontWeight: 600,
+  },
+  categoryPills: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: 6,
+  },
+  catPill: {
+    background: 'rgba(245,241,232,0.06)',
+    borderLeft: '3px solid',
+    padding: '8px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 12,
+  },
+  catPillName: { fontWeight: 600, letterSpacing: 0.3, flexShrink: 0 },
+  catPillRight: {
+    marginLeft: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  catPillConfirmed: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontWeight: 600,
+    fontSize: 11,
+    color: '#7ecf8e',
+  },
+  catPillEst: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontWeight: 400,
+    fontSize: 11,
+    opacity: 0.6,
+  },
+
+  controls: {
+    maxWidth: 1200,
+    margin: '0 auto',
+    padding: '20px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  viewToggle: {
+    display: 'flex',
+    background: '#fff',
+    border: '1px solid #d0c8b3',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  viewBtn: {
+    padding: '8px 16px',
+    background: 'transparent',
+    border: 'none',
+    borderRight: '1px solid #d0c8b3',
+    fontSize: 13,
+    fontWeight: 500,
+    color: '#666',
+    transition: 'all 0.15s',
+  },
+  viewBtnActive: { background: '#1a3a52', color: '#f5f1e8' },
+  actions: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  smallBtn: {
+    padding: '6px 12px',
+    background: 'transparent',
+    border: '1px solid #d0c8b3',
+    fontSize: 11,
+    color: '#666',
+    borderRadius: 2,
+  },
+  uploadBtn: {
+    position: 'relative',
+    padding: '8px 16px',
+    background: '#b8651b',
+    color: '#fff',
+    border: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    borderRadius: 2,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    cursor: 'pointer',
+    userSelect: 'none',
+    WebkitTapHighlightColor: 'transparent',
+  },
+  addBtn: {
+    padding: '8px 16px',
+    background: '#1a3a52',
+    color: '#fff',
+    border: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    borderRadius: 2,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    border: '1px solid rgba(245,241,232,0.2)',
+    background: 'transparent',
+    color: 'inherit',
+    borderRadius: 2,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBtnSm: {
+    width: 26,
+    height: 26,
+    border: '1px solid transparent',
+    background: 'transparent',
+    color: '#888',
+    borderRadius: 2,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  uploadStatus: {
+    maxWidth: 1200,
+    margin: '0 auto 12px',
+    padding: '10px 18px',
+    border: '1px solid',
+    borderRadius: 2,
+    fontSize: 13,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  main: { maxWidth: 1200, margin: '0 auto', padding: '0 24px' },
+
+  // DATE VIEW
+  dateList: { display: 'flex', flexDirection: 'column', gap: 6 },
+  dateCard: {
+    background: '#fff',
+    border: '1px solid #e3dac4',
+    borderRadius: 2,
+  },
+  dateHeader: {
+    width: '100%',
+    padding: '14px 18px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid transparent',
+    textAlign: 'left',
+  },
+  dateHeaderLeft: { display: 'flex', alignItems: 'center', gap: 12 },
+  dateLabel: { fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 500 },
+  dateItemCount: { fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1 },
+  dateTotal: { fontFamily: "'JetBrains Mono', monospace", fontSize: 15, fontWeight: 500 },
+  lineItems: { borderTop: '1px solid #e3dac4', padding: '4px 0' },
+
+  // LINE ITEM
+  lineItem: {
+    display: 'grid',
+    gridTemplateColumns: '6px 1fr auto auto',
+    gap: 12,
+    alignItems: 'center',
+    padding: '10px 18px',
+    borderTop: '1px solid #f4eedd',
+  },
+  lineDot: { width: 4, height: 28, borderRadius: 2 },
+  lineMain: { minWidth: 0 },
+  lineTop: { display: 'flex', alignItems: 'flex-start', gap: 8 },
+  lineDesc: { fontSize: 14, fontWeight: 500, lineHeight: 1.35, wordBreak: 'break-word' },
+  lineMeta: { fontSize: 11, color: '#888', marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
+  lineDate: { fontFamily: "'JetBrains Mono', monospace", color: '#b8651b' },
+  lineNotes: { fontStyle: 'italic' },
+  lineAmount: { fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' },
+  lineActions: { display: 'flex', gap: 2 },
+  badgeUploaded: {
+    fontSize: 9,
+    padding: '2px 6px',
+    background: '#fef6e4',
+    color: '#b8651b',
+    borderRadius: 2,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  badgeConfirmed: {
+    fontSize: 9,
+    padding: '2px 6px',
+    background: '#1a3a52',
+    color: '#fff',
+    borderRadius: 2,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  badgeManual: {
+    fontSize: 9,
+    padding: '2px 6px',
+    background: '#e8f3ec',
+    color: '#3d5a3d',
+    borderRadius: 2,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // CATEGORY VIEW
+  catList: { display: 'flex', flexDirection: 'column', gap: 16 },
+  catCard: {
+    background: '#fff',
+    border: '1px solid #e3dac4',
+    borderTop: '3px solid',
+    borderRadius: 2,
+  },
+  catCardHeader: {
+    padding: '16px 20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #f4eedd',
+  },
+  catCardLeft: { display: 'flex', alignItems: 'center', gap: 12 },
+  catCardTitle: { fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 500, margin: 0 },
+  catCardCount: { fontSize: 11, color: '#888', background: '#f5f1e8', padding: '2px 8px', borderRadius: 10 },
+  catCardTotal: { fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600 },
+  catLineItems: { padding: '4px 0' },
+
+  // MATRIX VIEW
+  matrixWrap: { overflowX: 'auto', background: '#fff', border: '1px solid #e3dac4', borderRadius: 2 },
+  matrix: {
+    width: '100%',
+    minWidth: 800,
+    borderCollapse: 'collapse',
+    fontSize: 12,
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  matrixCorner: { padding: '12px 16px', background: '#1a1a1a', color: '#f5f1e8', textAlign: 'left', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+  matrixHead: { padding: '12px 16px', background: '#1a1a1a', color: '#f5f1e8', textAlign: 'right', fontSize: 11, fontFamily: "'Manrope', sans-serif", fontWeight: 600 },
+  matrixHeadTotal: { padding: '12px 16px', background: '#d04231', color: '#fff', textAlign: 'right', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+  matrixDateCell: { padding: '8px 16px', borderBottom: '1px solid #f4eedd', fontFamily: "'Fraunces', serif", fontSize: 13 },
+  matrixCell: { padding: '8px 16px', borderBottom: '1px solid #f4eedd', textAlign: 'right' },
+  matrixDayTotal: { padding: '8px 16px', borderBottom: '1px solid #f4eedd', textAlign: 'right', fontWeight: 600, background: '#fef6e4' },
+  matrixFootLabel: { padding: '12px 16px', background: '#1a1a1a', color: '#f5f1e8', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 },
+  matrixFootCell: { padding: '12px 16px', background: '#1a1a1a', textAlign: 'right', fontWeight: 600 },
+  matrixGrand: { padding: '12px 16px', background: '#d04231', color: '#fff', textAlign: 'right', fontWeight: 700 },
+
+  footer: {
+    maxWidth: 1200,
+    margin: '40px auto 0',
+    padding: '20px 24px',
+    fontSize: 11,
+    color: '#888',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
+    flexWrap: 'wrap',
+    borderTop: '1px solid #d0c8b3',
+  },
+  resetBtn: {
+    background: 'transparent',
+    border: '1px solid #d0c8b3',
+    padding: '6px 10px',
+    fontSize: 11,
+    color: '#888',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 2,
+  },
+
+  // MODAL
+  modalBg: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(26,26,26,0.6)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    padding: 20,
+  },
+  modal: {
+    background: '#fff',
+    border: '1px solid #d0c8b3',
+    borderRadius: 2,
+    width: '100%',
+    maxWidth: 540,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+  },
+  modalHead: {
+    padding: '20px 24px',
+    borderBottom: '1px solid #e3dac4',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: '#1a1a1a',
+    color: '#f5f1e8',
+  },
+  modalTitle: { fontFamily: "'Fraunces', serif", margin: 0, fontSize: 22, fontWeight: 500 },
+  formGrid: { padding: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
+  label: { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#666', display: 'flex', flexDirection: 'column', gap: 6 },
+  input: {
+    padding: '10px 12px',
+    border: '1px solid #d0c8b3',
+    borderRadius: 2,
+    fontSize: 14,
+    background: '#fafaf7',
+    color: '#1a1a1a',
+    fontWeight: 400,
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
+  modalActions: { padding: '16px 24px', borderTop: '1px solid #e3dac4', display: 'flex', justifyContent: 'flex-end', gap: 10, background: '#fafaf7' },
+  btnSecondary: { padding: '10px 18px', background: 'transparent', border: '1px solid #d0c8b3', color: '#666', fontSize: 13, fontWeight: 500, borderRadius: 2 },
+  btnPrimary: { padding: '10px 18px', background: '#1a3a52', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 6 },
+};

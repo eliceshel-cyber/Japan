@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Japan 2026 · Family Diary</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --ink:#1a1008;--paper:#faf7f2;--cream:#f0ebe0;--warm:#e8ddd0;
+  --accent:#c0392b;--accent2:#e67e22;--gold:#9b7d2e;--muted:#8a7a6a;
+  --border:rgba(0,0,0,0.08);--green:#16a34a;--blue:#2563eb;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);}
+#app{height:100vh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+/* GRAIN */
+#app::before{content:'';pointer-events:none;position:fixed;inset:0;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");z-index:9999;}
+
+/* HEADER */
+.hdr{background:var(--ink);color:var(--paper);padding:20px 20px 0;flex-shrink:0;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.hdr-title{font-family:'Playfair Display',serif;font-size:22px;letter-spacing:-0.3px;}
+.hdr-title em{color:var(--accent2);font-style:italic;}
+.hdr-meta{font-size:11px;color:rgba(255,255,255,.4);font-weight:300;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:4px;transition:color .15s;}
+.icon-btn:hover{color:rgba(255,255,255,.9);}
+.tabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:4px;}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:2px solid transparent;transition:all .2s;}
+.tab.on{color:var(--accent2);border-bottom-color:var(--accent2);}
+
+/* ACTIONS */
+.actions{display:flex;gap:6px;padding:10px 12px;background:var(--cream);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.btn{border:none;cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 12px;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-red{background:var(--accent);color:#fff;} .btn-red:hover{background:#a93226;}
+.btn-warm{background:var(--warm);color:var(--ink);} .btn-warm:hover{background:#ddd4c5;}
+.btn-gold{background:var(--gold);color:#fff;} .btn-gold:hover{opacity:.85;}
+.btn:disabled{opacity:.4;cursor:default;}
+.sm-btn{padding:4px 8px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:500;}
+
+/* STATUS BAR */
+.status-bar{padding:7px 14px;background:#111;color:rgba(255,255,255,.65);font-size:11px;display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:30px;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:pulse 1s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.prog-wrap{background:rgba(255,255,255,.1);border-radius:4px;height:4px;flex:1;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent2);border-radius:4px;transition:width .3s;}
+
+/* SCROLL AREA */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* TIMELINE */
+.day-hdr{padding:14px 18px 6px;font-family:'Playfair Display',serif;font-size:13px;color:var(--muted);letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+.day-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{margin:4px 12px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.card.sel{border-color:var(--accent);background:#fff8f7;}
+.card-inner{padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
+.card-time{font-size:11px;color:var(--muted);min-width:34px;padding-top:2px;font-weight:500;}
+.card-body{flex:1;min-width:0;}
+.card-loc{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-preview{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.tag-ci{background:#fef3e2;color:#d97706;} .tag-ph{background:#f0fdf4;color:#16a34a;} .tag-cnt{background:#eff6ff;color:#2563eb;}
+.strip{display:flex;gap:4px;padding:0 14px 10px;overflow-x:auto;}
+.thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:8px;}
+.empty-text{font-size:13px;line-height:1.6;}
+
+/* MAP */
+.map-wrap{flex:1;padding:14px;display:flex;flex-direction:column;}
+.map-inner{flex:1;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+#map{width:100%;height:100%;}
+
+/* PANEL (entry detail, settings) */
+.panel{position:absolute;inset:0;background:var(--paper);overflow-y:auto;z-index:200;display:flex;flex-direction:column;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.panel-hdr{background:var(--ink);color:var(--paper);padding:20px;display:flex;align-items:flex-start;gap:12px;flex-shrink:0;}
+.back-btn{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;}
+.panel-title{font-family:'Playfair Display',serif;font-size:20px;flex:1;line-height:1.3;}
+.panel-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;}
+.panel-body{padding:18px;flex:1;}
+.media-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:18px;}
+.media-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;}
+.media-item img{width:100%;height:100%;object-fit:cover;}
+.media-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px;}
+.note-text{font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:12px;}
+.note-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;resize:none;min-height:80px;outline:none;color:var(--ink);}
+.note-input:focus{border-color:var(--accent);}
+.panel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.merge-bar{background:#fff3cd;padding:8px 16px;font-size:12px;color:#856404;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+
+/* SETUP / SETTINGS */
+.setup{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:32px 24px;}
+.setup-title{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:6px;text-align:center;}
+.setup-sub{font-size:13px;color:var(--muted);margin-bottom:32px;text-align:center;line-height:1.6;}
+.setup-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;margin-bottom:16px;}
+.setup-card-title{font-weight:600;font-size:15px;margin-bottom:4px;}
+.setup-card-body{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+.step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.step-num{width:22px;height:22px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px;}
+.step-text{font-size:13px;line-height:1.5;color:var(--muted);}
+.step-text a{color:var(--accent);text-decoration:none;}
+.field-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;}
+.field-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;outline:none;color:var(--ink);}
+.field-input:focus{border-color:var(--accent);}
+.field-hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
+.info-box{background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:12px;color:#166534;line-height:1.6;margin-bottom:14px;}
+.warn-box{background:#fef3e2;border-radius:10px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:14px;}
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.full-btn{width:100%;padding:13px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ─── UTILS ────────────────────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const fmtTime = ts => new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const dayKey = ts => new Date(ts).toISOString().slice(0,10);
+function haversineM(la1,lo1,la2,lo2){const R=6371000,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r,a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
+// ─── FIREBASE STORAGE ─────────────────────────────────────────────────────
+let FB_URL = "https://japan-2026-112da-default-rtdb.asia-southeast1.firebasedatabase.app";
+let evtSource = null;
+
+async function fbRead(path='/diary'){
+  const r = await fetch(`${FB_URL}${path}.json`);
+  return r.json();
+}
+async function fbWrite(path, data){
+  await fetch(`${FB_URL}${path}.json`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+}
+async function fbPatch(path, data){
+  await fetch(`${FB_URL}${path}.json`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+}
+async function fbDelete(path){
+  await fetch(`${FB_URL}${path}.json`, {method:'DELETE'});
+}
+
+function startRealtime(){
+  if(evtSource) evtSource.close();
+  if(!FB_URL) return;
+  evtSource = new EventSource(`${FB_URL}/diary/entries.json`);
+  evtSource.addEventListener('put', e => {
+    const d = JSON.parse(e.data);
+    if(d.data) { state.entries = Object.values(d.data); render(); }
+    else if(d.data === null) { state.entries = []; render(); }
+  });
+}
+
+// ─── EXIF PARSER ──────────────────────────────────────────────────────────
+function parseExif(buf){
+  try{
+    const v=new DataView(buf); if(v.getUint16(0)!==0xFFD8) return null;
+    let o=2;
+    while(o<v.byteLength-1){
+      const m=v.getUint16(o); o+=2;
+      if(m===0xFFE1){const l=v.getUint16(o);return parseIFD(buf.slice(o+2,o+l));}
+      if((m&0xFF00)!==0xFF00) break; o+=v.getUint16(o);
+    }
+  }catch{}; return null;
+}
+function parseIFD(buf){
+  try{
+    const v=new DataView(buf),magic=String.fromCharCode(...new Uint8Array(buf,0,4));
+    if(!magic.startsWith('Exif')) return null;
+    const to=6,le=v.getUint16(to)===0x4949,u16=o=>v.getUint16(to+o,le),u32=o=>v.getUint32(to+o,le);
+    const ifd=u32(4),n=u16(ifd); let gpsOff=null,ds=null;
+    for(let i=0;i<n;i++){const e=ifd+2+i*12,t=u16(e);if(t===0x8825)gpsOff=u32(e+8);if(t===0x9003||t===0x0132){const b=new Uint8Array(buf,to+u32(e+8),19);ds=String.fromCharCode(...b);}}
+    let gps=null;
+    if(gpsOff!=null){const gc=u16(gpsOff);let lR,la,lnR,ln;
+      for(let i=0;i<gc;i++){const e=gpsOff+2+i*12,t=u16(e),tp=u16(e+2),c=u32(e+4),vo=u32(e+8);
+        if(t===1)lR=String.fromCharCode(new Uint8Array(buf,to+vo,1)[0]);
+        if(t===3)lnR=String.fromCharCode(new Uint8Array(buf,to+vo,1)[0]);
+        if(t===2&&tp===5&&c===3)la=rat3(buf,to+vo,le);
+        if(t===4&&tp===5&&c===3)ln=rat3(buf,to+vo,le);
+      }
+      if(la!=null&&ln!=null)gps={lat:(lR==='S'?-1:1)*la,lon:(lnR==='W'?-1:1)*ln};
+    }
+    let timestamp=null;
+    if(ds){const[dp,tp]=ds.split(' ');const[y,mo,d]=dp.split(':');const[h,mi,s]=(tp||'00:00:00').split(':');timestamp=new Date(y,mo-1,d,h,mi,s).getTime();}
+    return{gps,timestamp};
+  }catch{}; return null;
+}
+function rat3(buf,off,le){const v=new DataView(buf);const[n0,d0,n1,d1,n2,d2]=[0,1,2,3,4,5].map(i=>v.getUint32(off+i*4,le));return(d0?n0/d0:0)+(d1?n1/d1/60:0)+(d2?n2/d2/3600:0);}
+
+// ─── GEO ──────────────────────────────────────────────────────────────────
+async function reverseGeocode(lat,lon){
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);const d=await r.json();const a=d.address||{};return a.tourism||a.amenity||a.building||a.neighbourhood||a.suburb||a.city_district||a.city||a.town||a.village||'Unknown location';}
+  catch{return 'Unknown location';}
+}
+
+// ─── THUMBNAIL ────────────────────────────────────────────────────────────
+async function makeThumbnail(b64,mime){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{const MAX=300,sc=Math.min(MAX/img.width,MAX/img.height,1),c=document.createElement('canvas');c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.55));};
+    img.onerror=()=>res(null);
+    img.src=`data:${mime||'image/jpeg'};base64,${b64}`;
+  });
+}
+
+// ─── CLUSTERING ───────────────────────────────────────────────────────────
+function findMatch(entries,gps,ts){
+  if(!gps) return null;
+  let best=null,bd=Infinity;
+  for(const e of entries){
+    if(!e.location?.lat) continue;
+    const dist=haversineM(gps.lat,gps.lon,e.location.lat,e.location.lon),dt=Math.abs((ts||0)-(e.timestamp||0))/60000;
+    if(dist<200&&dist<bd){best=e;bd=dist;}
+    else if(dist<500&&dt<30&&dist<bd){best=e;bd=dist;}
+  }
+  return best;
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────
+const state = {
+  view: 'timeline',       // timeline | map | entry | settings | setup
+  entries: [],
+  activeEntry: null,
+  syncing: false,
+  statusMsg: '',
+  statusProg: null,
+  mergeMode: false,
+  mergeTargets: [],
+  gpsStatus: 'idle',
+  mapInited: false,
+  leafletMap: null,
+};
+
+// ─── FIREBASE LOAD ────────────────────────────────────────────────────────
+async function loadEntries(){
+  if(!FB_URL) return;
+  try{
+    const data = await fbRead('/diary/entries');
+    state.entries = data ? Object.values(data) : [];
+    state.entries.sort((a,b)=>b.timestamp-a.timestamp);
+  }catch(e){ console.error(e); }
+}
+
+async function saveEntries(){
+  if(!FB_URL) return;
+  // Write as object keyed by id for Firebase
+  const obj = {};
+  for(const e of state.entries) obj[e.id] = e;
+  await fbWrite('/diary/entries', obj);
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────
+async function checkIn(){
+  state.gpsStatus = 'locating'; render();
+  try{
+    const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{enableHighAccuracy:true,timeout:10000}));
+    const {latitude:lat,longitude:lon} = pos.coords;
+    state.gpsStatus = 'geocoding'; render();
+    const name = await reverseGeocode(lat,lon);
+    const entry = {id:uid(),timestamp:Date.now(),type:'checkin',location:{lat,lon,name},notes:'',media:[]};
+    state.entries.unshift(entry);
+    await saveEntries();
+    state.activeEntry = entry;
+    state.view = 'entry';
+    state.gpsStatus = 'done';
+  }catch(e){ state.gpsStatus='error'; alert('Location error: '+e.message); }
+  render();
+}
+
+async function handleUpload(files){
+  if(!files||!files.length) return;
+  setStatus('Processing photos…', true);
+  for(const file of files){
+    const buffer = await file.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const exif = parseExif(buffer);
+    const thumb = await makeThumbnail(b64, file.type);
+    const media = {id:uid(),title:file.name,thumb,type:file.type.startsWith('video')?'video':'photo'};
+    const ts = exif?.timestamp || file.lastModified || Date.now();
+    const gps = exif?.gps;
+    const match = findMatch(state.entries, gps, ts);
+    if(match){
+      match.media.push(media);
+    } else {
+      let locName = 'Unknown location';
+      if(gps) locName = await reverseGeocode(gps.lat, gps.lon);
+      state.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+    }
+  }
+  state.entries.sort((a,b)=>b.timestamp-a.timestamp);
+  await saveEntries();
+  setStatus('Photos added.', false);
+  render();
+}
+
+async function saveNote(entryId, note){
+  const e = state.entries.find(x=>x.id===entryId);
+  if(!e||!note.trim()) return;
+  e.notes = (e.notes ? e.notes+'\n\n' : '') + note.trim();
+  await saveEntries();
+  state.activeEntry = {...e};
+  render();
+}
+
+async function deleteMedia(entryId, mediaId){
+  const e = state.entries.find(x=>x.id===entryId);
+  if(!e) return;
+  e.media = e.media.filter(m=>m.id!==mediaId);
+  await saveEntries();
+  if(state.activeEntry?.id===entryId) state.activeEntry.media = e.media;
+  render();
+}
+
+async function deleteEntry(entryId){
+  state.entries = state.entries.filter(e=>e.id!==entryId);
+  await saveEntries();
+  state.view = 'timeline';
+  render();
+}
+
+async function mergeSelected(){
+  if(state.mergeTargets.length<2) return;
+  const toMerge = state.entries.filter(e=>state.mergeTargets.includes(e.id)).sort((a,b)=>a.timestamp-b.timestamp);
+  const merged = {...toMerge[0], media:toMerge.flatMap(e=>e.media), notes:toMerge.map(e=>e.notes).filter(Boolean).join('\n\n')};
+  state.entries = [merged, ...state.entries.filter(e=>!state.mergeTargets.includes(e.id))];
+  state.entries.sort((a,b)=>b.timestamp-a.timestamp);
+  await saveEntries();
+  state.mergeMode=false; state.mergeTargets=[];
+  render();
+}
+
+function setStatus(msg, loading, prog=null){
+  state.statusMsg = msg; state.syncing = loading; state.statusProg = prog; render();
+}
+
+// ─── MAP ──────────────────────────────────────────────────────────────────
+function initMap(){
+  if(state.leafletMap){ state.leafletMap.remove(); state.leafletMap=null; }
+  const el = document.getElementById('map');
+  if(!el||!window.L) return;
+  const valid = state.entries.filter(e=>e.location?.lat);
+  if(!valid.length) return;
+  const map = L.map(el,{zoomControl:true});
+  state.leafletMap = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+  const icon = L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:#c0392b;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,iconSize:[12,12],iconAnchor:[6,6]});
+  valid.forEach(e=>{ L.marker([e.location.lat,e.location.lon],{icon}).bindPopup(`<b>${e.location.name||'Location'}</b><br>${fmtDate(e.timestamp)} ${fmtTime(e.timestamp)}`).addTo(map); });
+  const grp = new L.FeatureGroup(valid.map(e=>L.marker([e.location.lat,e.location.lon])));
+  map.fitBounds(grp.getBounds().pad(0.2));
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function el(tag,cls,html,attrs={}){
+  const e=document.createElement(tag); if(cls) e.className=cls; if(html) e.innerHTML=html;
+  Object.entries(attrs).forEach(([k,v])=>{ if(k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(),v); else e.setAttribute(k,v); });
+  return e;
+}
+function h(tag,cls,html,attrs){ return el(tag,cls,html,attrs).outerHTML; } // for strings
+
+function render(){
+  const app = document.getElementById('app');
+  const prevScroll = app.querySelector('.scroll')?.scrollTop || 0;
+
+  // ENTRY DETAIL
+  if(state.view==='entry' && state.activeEntry){
+    app.innerHTML = renderHeader() + renderEntryDetail();
+    bindEntry();
+    return;
+  }
+
+  // SETTINGS
+  if(state.view==='settings'){
+    app.innerHTML = renderHeader() + renderSettings();
+    bindSettings();
+    return;
+  }
+
+  // MAIN APP
+  app.innerHTML = renderHeader() + renderActions() + renderStatusBar() + renderMergeBar() + (state.view==='map' ? renderMap() : renderTimeline());
+  bindMain();
+  // Restore scroll
+  const scroll = app.querySelector('.scroll');
+  if(scroll) scroll.scrollTop = prevScroll;
+  // Init map
+  if(state.view==='map') setTimeout(initMap, 50);
+}
+
+// ─── RENDER: HEADER ───────────────────────────────────────────────────────
+function renderHeader(){
+  const total = state.entries.length;
+  const photos = state.entries.reduce((s,e)=>s+e.media.length,0);
+  const isEntry = state.view==='entry';
+  const isSettings = state.view==='settings';
+  return `<div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-title">Japan <em>2026</em></div>
+        <div class="hdr-meta">${total} entr${total===1?'y':'ies'} · ${photos} photo${photos===1?'':'s'}</div>
+      </div>
+      <div class="hdr-right">
+        <span style="font-size:26px">🗾</span>
+        ${!isEntry&&!isSettings?`<button class="icon-btn" id="btn-settings" title="Settings">⚙️</button>`:''}
+      </div>
+    </div>
+    ${!isEntry&&!isSettings?`<div class="tabs">
+      <div class="tab ${state.view==='timeline'?'on':''}" id="tab-tl">Timeline</div>
+      <div class="tab ${state.view==='map'?'on':''}" id="tab-map">Map</div>
+    </div>`:''}
+  </div>`;
+}
+
+// ─── RENDER: ACTIONS ──────────────────────────────────────────────────────
+function renderActions(){
+  const gps = state.gpsStatus;
+  return `<div class="actions">
+    <button class="btn btn-red" id="btn-checkin" ${gps==='locating'||gps==='geocoding'?'disabled':''}>
+      ${gps==='locating'?'📡…':gps==='geocoding'?'🔍…':'📍 Check In'}
+    </button>
+    <button class="btn btn-warm" id="btn-upload">📷 Add Photos</button>
+    ${state.entries.length>1?`<button class="btn btn-warm" id="btn-merge" style="${state.mergeMode?'background:#fee2e2;color:#991b1b':''}">${state.mergeMode?'✕ Cancel':'⊕ Merge'}</button>`:''}
+    <input type="file" id="file-input" accept="image/*,video/*" multiple style="display:none">
+  </div>`;
+}
+
+// ─── RENDER: STATUS BAR ───────────────────────────────────────────────────
+function renderStatusBar(){
+  if(!state.statusMsg) return '';
+  const p = state.statusProg;
+  return `<div class="status-bar">
+    ${state.syncing?'<div class="pulse"></div>':''}
+    ${p?`<span style="flex-shrink:0">${p.cur}/${p.tot}</span><div class="prog-wrap"><div class="prog-fill" style="width:${Math.round(p.cur/p.tot*100)}%"></div></div>`:`<span style="flex:1">${state.statusMsg}</span>`}
+    ${!state.syncing?`<span id="btn-dismiss-status" style="cursor:pointer;opacity:.5;margin-left:auto">✕</span>`:''}
+  </div>`;
+}
+
+// ─── RENDER: MERGE BAR ────────────────────────────────────────────────────
+function renderMergeBar(){
+  if(!state.mergeMode) return '';
+  return `<div class="merge-bar">
+    <span>Select entries to merge (${state.mergeTargets.length} selected)</span>
+    <button class="sm-btn btn-red" id="btn-do-merge" style="color:#fff;background:var(--accent);${state.mergeTargets.length<2?'opacity:.4;cursor:default':''}" ${state.mergeTargets.length<2?'disabled':''}>Merge</button>
+  </div>`;
+}
+
+// ─── RENDER: TIMELINE ────────────────────────────────────────────────────
+function renderTimeline(){
+  const byDay = state.entries.reduce((acc,e)=>{ const k=dayKey(e.timestamp); if(!acc[k]) acc[k]=[]; acc[k].push(e); return acc; },{});
+  const days = Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  if(!days.length) return `<div class="scroll"><div class="empty">
+    <div class="empty-icon">📖</div>
+    <div class="empty-title">Your diary awaits</div>
+    <div class="empty-text">Tap Check In to mark your location, or add photos from your camera roll. The diary is shared — family sees everything instantly.</div>
+  </div></div>`;
+
+  let html = '<div class="scroll" id="scroll-tl">';
+  for(const day of days){
+    html += `<div class="day-hdr">${fmtDate(new Date(day).getTime()+43200000)}</div>`;
+    for(const e of byDay[day]){
+      const sel = state.mergeTargets.includes(e.id);
+      html += `<div class="card ${sel?'sel':''}" data-id="${e.id}">
+        <div class="card-inner">
+          <div class="card-time">${fmtTime(e.timestamp)}</div>
+          <div class="card-body">
+            <div class="card-loc">${e.location?.name||'No location'}</div>
+            ${e.notes?`<div class="card-preview">${e.notes.slice(0,80)}${e.notes.length>80?'…':''}</div>`:''}
+            <div class="tags">
+              <span class="tag ${e.type==='checkin'?'tag-ci':'tag-ph'}">${e.type==='checkin'?'📍 Check-in':'📷 Photo'}</span>
+              ${e.media.length?`<span class="tag tag-cnt">${e.media.length} media</span>`:''}
+              ${e.location?.lat?`<span class="tag tag-cnt">📍 GPS</span>`:''}
+            </div>
+          </div>
+        </div>
+        ${e.media.length?`<div class="strip">${e.media.slice(0,5).map(m=>m.thumb?`<img class="thumb" src="${m.thumb}" alt="${m.title}">`:'').join('')}</div>`:''}
+      </div>`;
+    }
+  }
+  return html + '<div style="height:24px"></div></div>';
+}
+
+// ─── RENDER: MAP ──────────────────────────────────────────────────────────
+function renderMap(){
+  const valid = state.entries.filter(e=>e.location?.lat);
+  if(!valid.length) return `<div class="scroll"><div class="empty"><div class="empty-icon">📍</div><div class="empty-title">No locations yet</div><div class="empty-text">Check in or add photos with GPS to build your Japan map.</div></div></div>`;
+  return `<div class="map-wrap"><div class="map-inner"><div id="map"></div></div></div>`;
+}
+
+// ─── RENDER: ENTRY DETAIL ────────────────────────────────────────────────
+function renderEntryDetail(){
+  const e = state.activeEntry;
+  return `<div class="panel">
+    <div class="panel-hdr">
+      <button class="back-btn" id="btn-back">←</button>
+      <div style="flex:1">
+        <div class="panel-title">${e.location?.name||'No location'}</div>
+        <div class="panel-sub">${fmtDate(e.timestamp)} · ${fmtTime(e.timestamp)}${e.location?.lat?` · ${e.location.lat.toFixed(4)}, ${e.location.lon.toFixed(4)}`:''}</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      ${e.media.length?`<div class="media-grid">${e.media.map(m=>`
+        <div class="media-item">
+          ${m.thumb?`<img src="${m.thumb}" alt="${m.title}">`:`<div style="background:#eee;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px">${m.type==='video'?'🎬':'📷'}</div>`}
+          <button class="media-del" data-media-id="${m.id}">×</button>
+        </div>`).join('')}</div>`:''}
+      <div class="lbl">Notes</div>
+      ${e.notes?`<div class="note-text">${e.notes}</div>`:''}
+      <textarea class="note-input" id="note-input" placeholder="Add a note about this moment…"></textarea>
+      <div class="panel-actions">
+        <button class="btn btn-red" id="btn-save-note">Save Note</button>
+        <button class="btn btn-warm" id="btn-add-photo-entry">Add Photo</button>
+        <button class="btn" style="background:#fee2e2;color:#991b1b" id="btn-delete-entry">Delete</button>
+      </div>
+      <input type="file" id="file-input-entry" accept="image/*,video/*" multiple style="display:none">
+    </div>
+  </div>`;
+}
+
+// ─── RENDER: SETTINGS ────────────────────────────────────────────────────
+function renderSettings(){
+  return `<div class="panel">
+    <div class="panel-hdr">
+      <button class="back-btn" id="btn-back">←</button>
+      <div class="panel-title">Settings</div>
+    </div>
+    <div class="panel-body">
+      <div class="lbl">Firebase Database URL</div>
+      <input class="field-input" id="settings-fb" value="${FB_URL}" placeholder="https://your-project-default-rtdb.firebaseio.com">
+      <div class="field-hint" style="margin-top:6px;margin-bottom:18px">Change this only if you're switching to a different Firebase project.</div>
+      <div class="divider"></div>
+      <div class="lbl">Family Sharing</div>
+      <div class="info-box">✅ <b>This diary is shared.</b> Anyone with your URL can view, check in, add notes and upload photos.<br><br>
+      📁 <b>For Drive sync:</b> open the Claude artifact version (on your account), run ☁️ Sync there — photos appear here automatically via Firebase.</div>
+      <div class="divider"></div>
+      <div class="lbl">Danger Zone</div>
+      <button class="btn btn-warm" id="btn-clear" style="width:100%;justify-content:center;color:#991b1b;background:#fee2e2">🗑 Clear All Entries</button>
+      <div style="height:40px"></div>
+    </div>
+  </div>`;
+}
+
+// ─── RENDER: SETUP ────────────────────────────────────────────────────────
+function renderSetup(){
+  return `<div class="scroll"><div class="setup">
+    <div style="font-size:48px;margin-bottom:12px">🗾</div>
+    <div class="setup-title">Japan <em style="color:var(--accent2);font-style:italic">2026</em></div>
+    <div class="setup-sub">Family Diary · One-time setup required</div>
+    <div class="setup-card">
+      <div class="setup-card-title">Connect Firebase (free, 3 min)</div>
+      <div class="setup-card-body">Firebase stores diary entries so your whole family sees the same data in real-time.</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and create a new project</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">In the left menu → <b>Build → Realtime Database → Create Database</b> → Start in <b>test mode</b></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Copy the database URL — looks like: <code style="background:#f5f5f5;padding:1px 5px;border-radius:4px;font-size:12px">https://your-project-default-rtdb.firebaseio.com</code></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Paste it below and tap Connect</div></div>
+      <div class="warn-box" style="margin-top:14px;margin-bottom:0">⚠️ Test mode means anyone with your URL can read the diary. Fine for a family trip — change rules after the trip if needed.</div>
+    </div>
+    <div style="width:100%">
+      <div class="field-lbl">Firebase Database URL</div>
+      <input class="field-input" id="setup-fb" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-bottom:12px">
+      <button class="full-btn" id="btn-connect" style="background:var(--accent);color:#fff">Connect →</button>
+    </div>
+  </div></div>`;
+}
+
+// ─── BIND: SETUP ──────────────────────────────────────────────────────────
+function bindSetup(){
+  document.getElementById('btn-connect')?.addEventListener('click', async()=>{
+    const url = document.getElementById('setup-fb').value.trim().replace(/\/+$/,'');
+    if(!url.startsWith('https://')) { alert('Please enter a valid Firebase URL starting with https://'); return; }
+    FB_URL = url;
+    localStorage.setItem('fb-url', url);
+    await loadEntries();
+    startRealtime();
+    render();
+  });
+}
+
+// ─── BIND: MAIN ───────────────────────────────────────────────────────────
+function bindMain(){
+  document.getElementById('tab-tl')?.addEventListener('click',()=>{ state.view='timeline'; render(); });
+  document.getElementById('tab-map')?.addEventListener('click',()=>{ state.view='map'; render(); });
+  document.getElementById('btn-settings')?.addEventListener('click',()=>{ state.view='settings'; render(); });
+  document.getElementById('btn-checkin')?.addEventListener('click', checkIn);
+  document.getElementById('btn-dismiss-status')?.addEventListener('click',()=>{ state.statusMsg=''; state.syncing=false; state.statusProg=null; render(); });
+  // Upload
+  document.getElementById('btn-upload')?.addEventListener('click',()=>document.getElementById('file-input')?.click());
+  document.getElementById('file-input')?.addEventListener('change', e=>{ handleUpload([...e.target.files]); e.target.value=''; });
+  // Merge
+  document.getElementById('btn-merge')?.addEventListener('click',()=>{ state.mergeMode=!state.mergeMode; state.mergeTargets=[]; render(); });
+  document.getElementById('btn-do-merge')?.addEventListener('click', mergeSelected);
+  // Cards
+  document.querySelectorAll('.card').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const id = c.dataset.id;
+      if(state.mergeMode){
+        state.mergeTargets = state.mergeTargets.includes(id) ? state.mergeTargets.filter(x=>x!==id) : [...state.mergeTargets, id];
+        render();
+      } else {
+        state.activeEntry = state.entries.find(e=>e.id===id)||null;
+        state.view = 'entry';
+        render();
+      }
+    });
+  });
+}
+
+// ─── BIND: ENTRY ──────────────────────────────────────────────────────────
+function bindEntry(){
+  document.getElementById('btn-back')?.addEventListener('click',()=>{ state.view='timeline'; render(); });
+  document.getElementById('btn-save-note')?.addEventListener('click',()=>{
+    const note = document.getElementById('note-input')?.value||'';
+    saveNote(state.activeEntry.id, note);
+  });
+  document.getElementById('btn-add-photo-entry')?.addEventListener('click',()=>document.getElementById('file-input-entry')?.click());
+  document.getElementById('file-input-entry')?.addEventListener('change',e=>{ handleUpload([...e.target.files]); e.target.value=''; });
+  document.getElementById('btn-delete-entry')?.addEventListener('click',()=>{ if(confirm('Delete this entry?')) deleteEntry(state.activeEntry.id); });
+  document.querySelectorAll('.media-del').forEach(b=>{
+    b.addEventListener('click',e=>{ e.stopPropagation(); deleteMedia(state.activeEntry.id, b.dataset.mediaId); });
+  });
+}
+
+// ─── BIND: SETTINGS ───────────────────────────────────────────────────────
+function bindSettings(){
+  document.getElementById('btn-back')?.addEventListener('click',()=>{ state.view='timeline'; render(); });
+  document.getElementById('btn-clear')?.addEventListener('click',async()=>{
+    if(confirm('Delete all diary entries? This cannot be undone.')){ state.entries=[]; await saveEntries(); state.view='timeline'; render(); }
+  });
+  document.getElementById('settings-fb')?.addEventListener('change', e=>{
+    const url = e.target.value.trim().replace(/\/+$/,'');
+    if(url && url!==FB_URL){ FB_URL=url; localStorage.setItem('fb-url',url); loadEntries().then(render); startRealtime(); }
+  });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+(async()=>{
+  if(FB_URL){
+    await loadEntries();
+    startRealtime();
+  }
+  render();
+})();
+</script>
+</body>
+</html>

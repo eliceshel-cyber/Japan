@@ -290,15 +290,8 @@ function handleFiles(files){
           var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
           var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
           var gps=exif?exif.gps:null;
-          var match=findMatch(gps,ts);
-          // No GPS match — attach to most recent check-in within 4 hours
-          if(!match&&!gps){
-            var fourHours=4*60*60*1000;
-            for(var ci=0;ci<S.entries.length;ci++){
-              var ce=S.entries[ci];
-              if(ce.type==='checkin'&&Math.abs(ts-ce.timestamp)<fourHours){match=ce;break;}
-            }
-          }
+          // Only cluster if photo has GPS — never override photo timestamp with check-in
+          var match=gps?findMatch(gps,ts):null;
           if(match){
             match.media.push(media);
           }else{

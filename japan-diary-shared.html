@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Japan 2026 · Family Diary</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--ink:#1a1008;--paper:#faf7f2;--cream:#f0ebe0;--warm:#e8ddd0;--red:#c0392b;--orange:#e67e22;--gold:#9b7d2e;--muted:#8a7a6a;--bdr:rgba(0,0,0,0.08);}
+html,body{height:100%;background:var(--paper);}
+body{font-family:'DM Sans',sans-serif;color:var(--ink);}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
+.hdr{background:var(--ink);color:#fff;padding:20px 20px 0;position:sticky;top:0;z-index:50;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.hdr-title{font-family:'Playfair Display',serif;font-size:22px;}
+.hdr-title em{color:var(--orange);font-style:italic;}
+.hdr-meta{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.icon-btn{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:4px;}
+.tabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:4px;}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:2px solid transparent;}
+.tab.on{color:var(--orange);border-bottom-color:var(--orange);}
+.acts{display:flex;gap:8px;padding:10px 12px;background:var(--cream);border-bottom:1px solid var(--bdr);flex-wrap:wrap;align-items:center;}
+.btn{border:none;cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-warm{background:var(--warm);color:var(--ink);}
+.btn:disabled{opacity:.4;cursor:default;}
+.sbar{padding:8px 14px;background:#111;color:rgba(255,255,255,.7);font-size:12px;display:flex;align-items:center;gap:8px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:pu 1s infinite;flex-shrink:0;}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.manual-bar{display:flex;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--bdr);}
+.manual-bar input{flex:1;border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.manual-bar input:focus{border-color:var(--red);}
+.tl{padding:0 0 80px;}
+.day-hdr{padding:14px 18px 6px;font-family:'Playfair Display',serif;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;}
+.day-hdr::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.card{margin:4px 12px;background:#fff;border-radius:12px;border:1px solid var(--bdr);overflow:hidden;cursor:pointer;}
+.card:active{opacity:.85;}
+.card.sel{border-color:var(--red);}
+.card-inner{padding:12px 14px;display:flex;gap:10px;}
+.card-time{font-size:11px;color:var(--muted);min-width:36px;padding-top:2px;font-weight:500;}
+.card-body{flex:1;min-width:0;}
+.card-loc{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-note{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.t1{background:#fef3e2;color:#d97706;}.t2{background:#f0fdf4;color:#16a34a;}.t3{background:#eff6ff;color:#2563eb;}
+.strip{display:flex;gap:4px;padding:0 14px 10px;overflow-x:auto;}
+.thumb{width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+.empty{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-icon{font-size:56px;margin-bottom:16px;}
+.empty-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px;}
+.empty-text{font-size:13px;line-height:1.7;}
+.map-wrap{height:calc(100vh - 140px);padding:14px;}
+.map-inner{height:100%;border-radius:12px;overflow:hidden;border:1px solid var(--bdr);}
+#map{width:100%;height:100%;}
+.panel{position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--paper);overflow-y:auto;z-index:100;}
+.panel-hdr{background:var(--ink);color:#fff;padding:20px;display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;}
+.back{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:16px;}
+.panel-title{font-family:'Playfair Display',serif;font-size:20px;flex:1;line-height:1.3;}
+.panel-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;}
+.panel-body{padding:18px;}
+.mg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:18px;}
+.mi{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;}
+.mi img{width:100%;height:100%;object-fit:cover;}
+.mi-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;}
+.note-text{font-size:14px;line-height:1.8;white-space:pre-wrap;margin-bottom:14px;}
+.note-input{width:100%;border:1px solid var(--bdr);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;resize:none;min-height:90px;outline:none;color:var(--ink);}
+.note-input:focus{border-color:var(--red);}
+.pacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.del-confirm{background:#fee2e2;border-radius:10px;padding:12px;margin-top:10px;}
+.del-confirm p{font-size:13px;color:#991b1b;margin-bottom:10px;}
+.del-confirm-btns{display:flex;gap:8px;}
+.settings-panel{padding:24px;}
+.settings-panel h2{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:20px;}
+.field-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;}
+.field-input{width:100%;border:1px solid var(--bdr);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;outline:none;color:var(--ink);margin-bottom:14px;}
+.field-input:focus{border-color:var(--red);}
+.info{background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:13px;color:#166534;line-height:1.6;margin-bottom:16px;}
+.hr{height:1px;background:var(--bdr);margin:20px 0;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+'use strict';
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const FB = 'https://japan-2026-112da-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const fmtTime = ts => new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const dayKey = ts => new Date(ts).toISOString().slice(0,10);
+function haversineM(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z));}
+
+// ── FIREBASE ──────────────────────────────────────────────────────────────
+async function fbRead() {
+  try {
+    const r = await fetch(FB + '/diary/entries.json');
+    const d = await r.json();
+    return d ? Object.values(d).sort((a,b) => b.timestamp - a.timestamp) : [];
+  } catch(e) { console.error('Firebase read error:', e); return []; }
+}
+async function fbWrite(entries) {
+  try {
+    const obj = {};
+    entries.forEach(e => { obj[e.id] = e; });
+    await fetch(FB + '/diary/entries.json', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(obj)
+    });
+  } catch(e) { console.error('Firebase write error:', e); }
+}
+
+// ── EXIF ──────────────────────────────────────────────────────────────────
+function parseExif(buf) {
+  try {
+    const v = new DataView(buf);
+    if (v.getUint16(0) !== 0xFFD8) return null;
+    let o = 2;
+    while (o < v.byteLength - 1) {
+      const m = v.getUint16(o); o += 2;
+      if (m === 0xFFE1) { const l = v.getUint16(o); return parseIFD(buf.slice(o+2, o+l)); }
+      if ((m & 0xFF00) !== 0xFF00) break;
+      o += v.getUint16(o);
+    }
+  } catch(e) {}
+  return null;
+}
+function parseIFD(buf) {
+  try {
+    const v = new DataView(buf);
+    if (!String.fromCharCode(...new Uint8Array(buf,0,4)).startsWith('Exif')) return null;
+    const t=6, le=v.getUint16(t)===0x4949;
+    const u16=o=>v.getUint16(t+o,le), u32=o=>v.getUint32(t+o,le);
+    const ifd=u32(4), n=u16(ifd);
+    let gpsOff=null, ds=null;
+    for (let i=0; i<n; i++) {
+      const e=ifd+2+i*12, tag=u16(e);
+      if (tag===0x8825) gpsOff=u32(e+8);
+      if (tag===0x9003||tag===0x0132) ds=String.fromCharCode(...new Uint8Array(buf,t+u32(e+8),19));
+    }
+    let gps = null;
+    if (gpsOff != null) {
+      const gc=u16(gpsOff); let lR,la,lnR,ln;
+      for (let i=0; i<gc; i++) {
+        const e=gpsOff+2+i*12, tag=u16(e), tp=u16(e+2), c=u32(e+4), vo=u32(e+8);
+        if (tag===1) lR=String.fromCharCode(new Uint8Array(buf,t+vo,1)[0]);
+        if (tag===3) lnR=String.fromCharCode(new Uint8Array(buf,t+vo,1)[0]);
+        if (tag===2&&tp===5&&c===3) la=rat3(buf,t+vo,le);
+        if (tag===4&&tp===5&&c===3) ln=rat3(buf,t+vo,le);
+      }
+      if (la!=null&&ln!=null) gps = {lat:(lR==='S'?-1:1)*la, lon:(lnR==='W'?-1:1)*ln};
+    }
+    let timestamp = null;
+    if (ds) {
+      const [dp,tp] = ds.split(' ');
+      const [y,mo,d] = dp.split(':');
+      const [h,mi,s] = (tp||'00:00:00').split(':');
+      timestamp = new Date(+y,mo-1,+d,+h,+mi,+s).getTime();
+    }
+    return {gps, timestamp};
+  } catch(e) {}
+  return null;
+}
+function rat3(buf,off,le){const v=new DataView(buf);return [0,1,2].reduce((s,i)=>{const n=v.getUint32(off+i*8,le),d=v.getUint32(off+i*8+4,le);return s+(d?n/d/[1,60,3600][i]:0);},0);}
+
+// ── GEO ───────────────────────────────────────────────────────────────────
+async function reverseGeocode(lat,lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
+    const d = await r.json();
+    const a = d.address||{};
+    return a.tourism||a.amenity||a.neighbourhood||a.suburb||a.city||a.town||a.village||'Unknown location';
+  } catch(e) { return 'Unknown location'; }
+}
+
+// ── THUMBNAIL ─────────────────────────────────────────────────────────────
+function mkThumb(b64,mime) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX=300, sc=Math.min(MAX/img.width,MAX/img.height,1);
+      const c=document.createElement('canvas');
+      c.width=img.width*sc; c.height=img.height*sc;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',.55));
+    };
+    img.onerror = () => res(null);
+    img.src = `data:${mime||'image/jpeg'};base64,${b64}`;
+  });
+}
+
+// ── CLUSTERING ────────────────────────────────────────────────────────────
+function findMatch(entries, gps, ts) {
+  if (!gps) return null;
+  let best=null, bd=Infinity;
+  for (const e of entries) {
+    if (!e.location?.lat) continue;
+    const d=haversineM(gps.lat,gps.lon,e.location.lat,e.location.lon);
+    const dt=Math.abs((ts||0)-(e.timestamp||0))/60000;
+    if (d<200&&d<bd) { best=e; bd=d; }
+    else if (d<500&&dt<30&&d<bd) { best=e; bd=d; }
+  }
+  return best;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+const S = {
+  view: 'timeline',
+  entries: [],
+  active: null,
+  loading: false,
+  statusMsg: '',
+  gps: 'idle',   // idle | locating | manual
+  mergeMode: false,
+  mergeTargets: [],
+  mapReady: false,
+  leafletMap: null,
+  confirmDelete: false,
+};
+
+function setStatus(msg, loading) {
+  S.statusMsg = msg; S.loading = loading;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────
+async function checkIn() {
+  S.gps = 'locating'; render();
+  try {
+    if (!navigator.geolocation) throw new Error('GPS not available');
+    const pos = await new Promise((res,rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy:true,timeout:12000})
+    );
+    const {latitude:lat, longitude:lon} = pos.coords;
+    setStatus('Getting location name…', true); render();
+    const name = await reverseGeocode(lat, lon);
+    const entry = {id:uid(), timestamp:Date.now(), type:'checkin', location:{lat,lon,name}, notes:'', media:[]};
+    S.entries.unshift(entry);
+    await fbWrite(S.entries);
+    S.active = entry; S.view = 'entry'; S.gps = 'idle'; S.confirmDelete = false;
+    setStatus('', false);
+  } catch(e) {
+    S.gps = 'manual';
+    setStatus('GPS unavailable — enter location name below.', false);
+  }
+  render();
+}
+
+async function checkInManual(name) {
+  if (!name.trim()) return;
+  const entry = {id:uid(), timestamp:Date.now(), type:'checkin', location:{lat:null,lon:null,name:name.trim()}, notes:'', media:[]};
+  S.entries.unshift(entry);
+  await fbWrite(S.entries);
+  S.active = entry; S.view = 'entry'; S.gps = 'idle'; S.confirmDelete = false;
+  setStatus('', false);
+  render();
+}
+
+async function handleFiles(files) {
+  if (!files||!files.length) return;
+  setStatus(`Processing ${files.length} photo(s)…`, true); render();
+  for (const f of files) {
+    const buf = await f.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const exif = parseExif(buf);
+    const thumb = await mkThumb(b64, f.type);
+    const media = {id:uid(), title:f.name, thumb, type: f.type.startsWith('video')?'video':'photo'};
+    const ts = exif?.timestamp || f.lastModified || Date.now();
+    const gps = exif?.gps;
+    const match = findMatch(S.entries, gps, ts);
+    if (match) {
+      match.media = [...match.media, media];
+    } else {
+      let locName = 'Unknown location';
+      if (gps) locName = await reverseGeocode(gps.lat, gps.lon);
+      S.entries.push({id:uid(), timestamp:ts, type:'photo', location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null, notes:'', media:[media]});
+    }
+  }
+  S.entries.sort((a,b) => b.timestamp - a.timestamp);
+  await fbWrite(S.entries);
+  setStatus('Photos added.', false);
+  render();
+}
+
+async function saveNote(entryId, note) {
+  if (!note.trim()) return;
+  const e = S.entries.find(x=>x.id===entryId);
+  if (!e) return;
+  e.notes = (e.notes ? e.notes+'\n\n' : '') + note.trim();
+  S.active = {...e};
+  await fbWrite(S.entries);
+  render();
+}
+
+async function deleteMedia(entryId, mediaId) {
+  const e = S.entries.find(x=>x.id===entryId);
+  if (!e) return;
+  e.media = e.media.filter(m=>m.id!==mediaId);
+  if (S.active?.id===entryId) S.active.media = e.media;
+  await fbWrite(S.entries);
+  render();
+}
+
+async function deleteEntry(entryId) {
+  S.entries = S.entries.filter(e=>e.id!==entryId);
+  await fbWrite(S.entries);
+  S.view = 'timeline'; S.active = null; S.confirmDelete = false;
+  render();
+}
+
+async function doMerge() {
+  if (S.mergeTargets.length < 2) return;
+  const toMerge = S.entries.filter(e=>S.mergeTargets.includes(e.id)).sort((a,b)=>a.timestamp-b.timestamp);
+  const merged = {...toMerge[0], media:toMerge.flatMap(e=>e.media), notes:toMerge.map(e=>e.notes).filter(Boolean).join('\n\n')};
+  S.entries = [merged, ...S.entries.filter(e=>!S.mergeTargets.includes(e.id))].sort((a,b)=>b.timestamp-a.timestamp);
+  await fbWrite(S.entries);
+  S.mergeMode = false; S.mergeTargets = [];
+  render();
+}
+
+// ── MAP ───────────────────────────────────────────────────────────────────
+function initMap() {
+  if (S.leafletMap) { S.leafletMap.remove(); S.leafletMap = null; }
+  const el = document.getElementById('map');
+  if (!el || !window.L) return;
+  const valid = S.entries.filter(e=>e.location?.lat);
+  if (!valid.length) return;
+  const map = L.map(el); S.leafletMap = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
+  const icon = L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:#c0392b;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.3)"></div>`,iconSize:[12,12],iconAnchor:[6,6]});
+  valid.forEach(e => L.marker([e.location.lat,e.location.lon],{icon}).bindPopup(`<b>${e.location.name||'Location'}</b><br>${fmtDate(e.timestamp)}`).addTo(map));
+  const g = new L.FeatureGroup(valid.map(e=>L.marker([e.location.lat,e.location.lon])));
+  map.fitBounds(g.getBounds().pad(0.2));
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const totalPhotos = S.entries.reduce((s,e)=>s+e.media.length,0);
+
+  // ── ENTRY PANEL ───────────────────────────────────────────────────────
+  if (S.view === 'entry' && S.active) {
+    const e = S.active;
+    app.innerHTML = `
+      <div class="panel">
+        <div class="panel-hdr">
+          <button class="back" onclick="S.view='timeline';S.confirmDelete=false;render()">←</button>
+          <div style="flex:1">
+            <div class="panel-title">${e.location?.name||'No location'}</div>
+            <div class="panel-sub">${fmtDate(e.timestamp)} · ${fmtTime(e.timestamp)}${e.location?.lat?' · '+e.location.lat.toFixed(4)+', '+e.location.lon.toFixed(4):''}</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          ${e.media.length?`<div class="mg">${e.media.map(m=>`
+            <div class="mi">
+              ${m.thumb?`<img src="${m.thumb}" alt="${m.title}">`:`<div style="background:#eee;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px">${m.type==='video'?'🎬':'📷'}</div>`}
+              <button class="mi-del" onclick="deleteMedia('${e.id}','${m.id}')">×</button>
+            </div>`).join('')}</div>`:''}
+          <div class="lbl">Notes</div>
+          ${e.notes?`<div class="note-text">${e.notes}</div>`:''}
+          <textarea class="note-input" id="note-input" placeholder="Add a note about this moment…"></textarea>
+          <div class="pacts">
+            <button class="btn btn-red" onclick="saveNote('${e.id}',document.getElementById('note-input').value)">Save Note</button>
+            <label class="btn btn-warm" for="file-entry" style="cursor:pointer">Add Photo</label>
+            <button class="btn btn-warm" onclick="S.confirmDelete=!S.confirmDelete;render()">Delete</button>
+          </div>
+          ${S.confirmDelete?`<div class="del-confirm">
+            <p>Delete this entry and all its photos?</p>
+            <div class="del-confirm-btns">
+              <button class="btn btn-warm" style="flex:1" onclick="S.confirmDelete=false;render()">Cancel</button>
+              <button class="btn btn-red" style="flex:1" onclick="deleteEntry('${e.id}')">Yes, delete</button>
+            </div>
+          </div>`:''}
+          <input id="file-entry" type="file" accept="image/*,video/*" multiple style="display:none" onchange="handleFiles([...this.files]);this.value=''">
+        </div>
+      </div>`;
+    return;
+  }
+
+  // ── SETTINGS PANEL ────────────────────────────────────────────────────
+  if (S.view === 'settings') {
+    app.innerHTML = `
+      <div class="panel">
+        <div class="panel-hdr">
+          <button class="back" onclick="S.view='timeline';render()">←</button>
+          <div class="panel-title">Settings</div>
+        </div>
+        <div class="settings-panel">
+          <div class="info">✅ <b>Shared diary.</b> Everyone with this URL sees the same entries in real-time via Firebase.<br><br>📷 <b>Photos</b> are uploaded directly — no Google Photos sync needed for daily use.<br><br>☁️ <b>Drive sync</b> is available in the Claude artifact version.</div>
+          <div class="hr"></div>
+          <div class="field-lbl">Danger Zone</div>
+          <button class="btn btn-warm" style="width:100%;justify-content:center;color:#991b1b;background:#fee2e2" onclick="if(confirm('Delete ALL entries? This cannot be undone.')){S.entries=[];fbWrite([]);S.view='timeline';render();}">🗑 Clear All Entries</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // ── MAIN APP ──────────────────────────────────────────────────────────
+  const byDay = S.entries.reduce((a,e)=>{ const k=dayKey(e.timestamp); if(!a[k])a[k]=[]; a[k].push(e); return a; },{});
+  const days = Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+
+  let html = `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div>
+          <div class="hdr-title">Japan <em>2026</em></div>
+          <div class="hdr-meta">${S.entries.length} entr${S.entries.length===1?'y':'ies'} · ${totalPhotos} photo${totalPhotos===1?'':'s'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:26px">🗾</span>
+          <button class="icon-btn" onclick="S.view='settings';render()">⚙️</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab ${S.view==='timeline'?'on':''}" onclick="S.view='timeline';render()">Timeline</div>
+        <div class="tab ${S.view==='map'?'on':''}" onclick="S.view='map';render()">Map</div>
+      </div>
+    </div>
+    <div class="acts">
+      <button class="btn btn-red" onclick="checkIn()" ${S.gps==='locating'?'disabled':''}>
+        ${S.gps==='locating'?'📡 Locating…':'📍 Check In'}
+      </button>
+      <label class="btn btn-warm" for="file-main" style="cursor:pointer">📷 Add Photos</label>
+      ${S.entries.length>1?`<button class="btn btn-warm" style="${S.mergeMode?'background:#fee2e2;color:#991b1b':''}" onclick="S.mergeMode=!S.mergeMode;S.mergeTargets=[];render()">${S.mergeMode?'✕ Cancel':'⊕ Merge'}</button>`:''}
+      <input id="file-main" type="file" accept="image/*,video/*" multiple style="display:none" onchange="handleFiles([...this.files]);this.value=''">
+    </div>`;
+
+  if (S.statusMsg) {
+    html += `<div class="sbar">${S.loading?'<div class="dot"></div>':''}<span style="flex:1">${S.statusMsg}</span>${!S.loading?'<span onclick="S.statusMsg=\'\';render()" style="cursor:pointer;opacity:.5">✕</span>':''}</div>`;
+  }
+
+  if (S.gps === 'manual') {
+    html += `<div class="manual-bar">
+      <input id="manual-loc" placeholder="Enter location name…" onkeydown="if(event.key==='Enter')checkInManual(this.value)">
+      <button class="btn btn-red" onclick="checkInManual(document.getElementById('manual-loc').value)">✓</button>
+      <button class="btn btn-warm" onclick="S.gps='idle';S.statusMsg='';render()">✕</button>
+    </div>`;
+  }
+
+  if (S.mergeMode) {
+    html += `<div style="background:#fff3cd;padding:8px 16px;font-size:12px;color:#856404;display:flex;justify-content:space-between;align-items:center">
+      <span>Select entries to merge (${S.mergeTargets.length} selected)</span>
+      <button class="btn btn-red" style="padding:4px 10px;font-size:11px" ${S.mergeTargets.length<2?'disabled':''} onclick="doMerge()">Merge</button>
+    </div>`;
+  }
+
+  if (S.view === 'map') {
+    const valid = S.entries.filter(e=>e.location?.lat);
+    if (!valid.length) {
+      html += `<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">No locations yet</div><div class="empty-text">Check in or add photos with GPS to build your map.</div></div>`;
+    } else {
+      html += `<div class="map-wrap"><div class="map-inner"><div id="map"></div></div></div>`;
+    }
+  } else {
+    if (!days.length) {
+      html += `<div class="empty"><div class="empty-icon">📖</div><div class="empty-title">Your diary awaits</div><div class="empty-text">Tap Check In to mark your location, or add photos from your camera roll. The diary is shared — family sees everything instantly.</div></div>`;
+    } else {
+      html += `<div class="tl">`;
+      for (const day of days) {
+        html += `<div class="day-hdr">${fmtDate(new Date(day).getTime()+43200000)}</div>`;
+        for (const e of byDay[day]) {
+          const sel = S.mergeTargets.includes(e.id);
+          html += `<div class="card ${sel?'sel':''}" onclick="cardClick('${e.id}')">
+            <div class="card-inner">
+              <div class="card-time">${fmtTime(e.timestamp)}</div>
+              <div class="card-body">
+                <div class="card-loc">${e.location?.name||'No location'}</div>
+                ${e.notes?`<div class="card-note">${e.notes.slice(0,80)}${e.notes.length>80?'…':''}</div>`:''}
+                <div class="tags">
+                  <span class="tag ${e.type==='checkin'?'t1':'t2'}">${e.type==='checkin'?'📍 Check-in':'📷 Photo'}</span>
+                  ${e.media.length?`<span class="tag t3">${e.media.length} media</span>`:''}
+                  ${e.location?.lat?`<span class="tag t3">📍 GPS</span>`:''}
+                </div>
+              </div>
+            </div>
+            ${e.media.length?`<div class="strip">${e.media.slice(0,5).map(m=>m.thumb?`<img class="thumb" src="${m.thumb}" alt="">`:'').join('')}</div>`:''}
+          </div>`;
+        }
+      }
+      html += `<div style="height:30px"></div></div>`;
+    }
+  }
+
+  app.innerHTML = html;
+  if (S.view === 'map') setTimeout(initMap, 50);
+}
+
+function cardClick(id) {
+  if (S.mergeMode) {
+    S.mergeTargets = S.mergeTargets.includes(id) ? S.mergeTargets.filter(x=>x!==id) : [...S.mergeTargets, id];
+    render();
+  } else {
+    S.active = S.entries.find(e=>e.id===id)||null;
+    S.view = 'entry'; S.confirmDelete = false;
+    render();
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    S.entries = await fbRead();
+  } catch(e) {
+    console.error('Init error:', e);
+  }
+  render();
+})();
+</script>
+</body>
+</html>

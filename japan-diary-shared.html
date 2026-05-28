@@ -102,7 +102,10 @@ function haversineM(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z
 // ── FIREBASE ──────────────────────────────────────────────────────────────
 async function fbRead() {
   try {
-    const r = await fetch(FB + '/diary/entries.json');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(FB + '/diary/entries.json', {signal: ctrl.signal});
+    clearTimeout(timer);
     const d = await r.json();
     return d ? Object.values(d).sort((a,b) => b.timestamp - a.timestamp) : [];
   } catch(e) { console.error('Firebase read error:', e); return []; }
@@ -507,13 +510,19 @@ function cardClick(id) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
+render(); // Show immediately — don't wait for Firebase
 (async () => {
   try {
-    S.entries = await fbRead();
+    const loaded = await fbRead();
+    if (loaded.length > 0 || S.entries.length === 0) {
+      S.entries = loaded;
+      render();
+    }
   } catch(e) {
-    console.error('Init error:', e);
+    console.error('Firebase error:', e);
+    setStatus('Firebase unavailable — entries not loaded.', false);
+    render();
   }
-  render();
 })();
 </script>
 </body>

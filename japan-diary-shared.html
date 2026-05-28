@@ -114,12 +114,22 @@ async function fbWrite(entries) {
   try {
     const obj = {};
     entries.forEach(e => { obj[e.id] = e; });
-    await fetch(FB + '/diary/entries.json', {
+    const r = await fetch(FB + '/diary/entries.json', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(obj)
     });
-  } catch(e) { console.error('Firebase write error:', e); }
+    if (!r.ok) {
+      const txt = await r.text();
+      console.error('Firebase write failed:', r.status, txt);
+      setStatus('Save failed: ' + txt, false);
+      render();
+    }
+  } catch(e) {
+    console.error('Firebase write error:', e);
+    setStatus('Save failed: ' + e.message, false);
+    render();
+  }
 }
 
 // ── EXIF ──────────────────────────────────────────────────────────────────
@@ -190,11 +200,11 @@ function mkThumb(b64,mime) {
   return new Promise(res => {
     const img = new Image();
     img.onload = () => {
-      const MAX=300, sc=Math.min(MAX/img.width,MAX/img.height,1);
+      const MAX=200, sc=Math.min(MAX/img.width,MAX/img.height,1);
       const c=document.createElement('canvas');
-      c.width=img.width*sc; c.height=img.height*sc;
+      c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      res(c.toDataURL('image/jpeg',.55));
+      res(c.toDataURL('image/jpeg',.4));
     };
     img.onerror = () => res(null);
     img.src = `data:${mime||'image/jpeg'};base64,${b64}`;
@@ -267,12 +277,19 @@ async function checkInManual(name) {
   render();
 }
 
+function toBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
 async function handleFiles(files) {
   if (!files||!files.length) return;
   setStatus(`Processing ${files.length} photo(s)…`, true); render();
   for (const f of files) {
     const buf = await f.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const b64 = toBase64(buf);
     const exif = parseExif(buf);
     const thumb = await mkThumb(b64, f.type);
     const media = {id:uid(), title:f.name, thumb, type: f.type.startsWith('video')?'video':'photo'};

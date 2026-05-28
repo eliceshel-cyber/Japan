@@ -284,23 +284,21 @@ function handleFiles(files){
     var f=files[idx++];
     // Read EXIF first (async, handles all camera formats)
     readExif(f).then(function(exif){
+      // Show EXIF debug on screen
+      var dbg='EXIF: ts='+(exif&&exif.timestamp?new Date(exif.timestamp).toLocaleTimeString():'none')+' gps='+(exif&&exif.gps?exif.gps.lat.toFixed(4)+','+exif.gps.lon.toFixed(4):'none')+' fallback='+new Date(f.lastModified||Date.now()).toLocaleTimeString();
+      S.statusMsg=dbg; render();
       return f.arrayBuffer().then(function(buf){
         var b64=toBase64(buf);
         return mkThumb(b64,f.type).then(function(thumb){
           var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
           var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
           var gps=exif?exif.gps:null;
-          // Only cluster if photo has GPS — never override photo timestamp with check-in
-          var match=gps?findMatch(gps,ts):null;
-          if(match){
-            match.media.push(media);
-          }else{
-            var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve('Unknown location');
-            return locPromise.then(function(locName){
-              S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
-              S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
-            });
-          }
+          // Each photo gets its own entry at its own timestamp — no clustering
+          var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve(null);
+          return locPromise.then(function(locName){
+            S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+            S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
+          });
         });
       });
     }).then(next).catch(function(e){ console.error(e); next(); });

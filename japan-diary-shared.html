@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Japan 2026 · Diary</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--ink:#1a1008;--paper:#faf7f2;--cream:#f0ebe0;--warm:#e8ddd0;--red:#c0392b;--orange:#e67e22;--gold:#9b7d2e;--muted:#8a7a6a;--bdr:rgba(0,0,0,0.08);}
+html,body{height:100%;background:var(--paper);}
+body{font-family:'DM Sans',sans-serif;color:var(--ink);}
+#app{max-width:480px;margin:0 auto;min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--ink);color:#fff;padding:20px 20px 0;position:sticky;top:0;z-index:50;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.hdr-title{font-family:'Playfair Display',serif;font-size:22px;}
+.hdr-title em{color:var(--orange);font-style:italic;}
+.hdr-meta{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.tabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:4px;}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:2px solid transparent;}
+.tab.on{color:var(--orange);border-bottom-color:var(--orange);}
+
+/* ACTIONS */
+.acts{display:flex;gap:8px;padding:10px 12px;background:var(--cream);border-bottom:1px solid var(--bdr);flex-wrap:wrap;}
+.btn{border:none;cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-warm{background:var(--warm);color:var(--ink);}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-green{background:#16a34a;color:#fff;}
+
+/* STATUS */
+.sbar{padding:8px 14px;background:#1a1008;color:rgba(255,255,255,.8);font-size:12px;display:flex;align-items:center;gap:8px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:pu 1s infinite;flex-shrink:0;}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MANUAL LOCATION */
+.manual-bar{display:flex;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--bdr);}
+.manual-bar input{flex:1;border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+.manual-bar input:focus{border-color:var(--red);}
+
+/* TIMELINE */
+.tl{padding:0 0 80px;}
+.day-hdr{padding:14px 18px 6px;font-family:'Playfair Display',serif;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;}
+.day-hdr::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.card{margin:4px 12px 0;background:#fff;border-radius:12px;border:1px solid var(--bdr);overflow:hidden;cursor:pointer;}
+.card:active{opacity:.8;}
+.card-inner{padding:12px 14px;display:flex;gap:10px;}
+.ct{font-size:11px;color:var(--muted);min-width:36px;padding-top:2px;font-weight:500;}
+.cb{flex:1;min-width:0;}
+.cl{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cp{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.t1{background:#fef3e2;color:#d97706;}.t2{background:#f0fdf4;color:#16a34a;}.t3{background:#eff6ff;color:#2563eb;}
+.strip{display:flex;gap:4px;padding:0 14px 10px;overflow-x:auto;}
+.thumb{width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-icon{font-size:56px;margin-bottom:16px;}
+.empty-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px;}
+.empty-text{font-size:13px;line-height:1.7;}
+
+/* MAP */
+.map-wrap{height:calc(100vh - 140px);padding:14px;}
+.map-inner{height:100%;border-radius:12px;overflow:hidden;border:1px solid var(--bdr);}
+#leafmap{width:100%;height:100%;}
+
+/* ENTRY PANEL */
+.panel{position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--paper);overflow-y:auto;z-index:100;}
+.phdr{background:var(--ink);color:#fff;padding:20px;display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:16px;}
+.ptitle{font-family:'Playfair Display',serif;font-size:20px;flex:1;line-height:1.3;}
+.psub{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;}
+.pbody{padding:18px;}
+.mg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:18px;}
+.mi{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;}
+.mi img{width:100%;height:100%;object-fit:cover;}
+.mi-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;margin-top:16px;}
+.lbl:first-child{margin-top:0;}
+.note-text{font-size:14px;line-height:1.8;white-space:pre-wrap;}
+.note-input{width:100%;border:1px solid var(--bdr);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff;resize:none;min-height:90px;outline:none;color:var(--ink);margin-top:8px;}
+.note-input:focus{border-color:var(--red);}
+.pacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.del-box{background:#fee2e2;border-radius:10px;padding:14px;margin-top:12px;}
+.del-box p{font-size:13px;color:#991b1b;margin-bottom:10px;}
+.del-row{display:flex;gap:8px;}
+
+/* READ-ONLY BANNER */
+.ro-banner{background:#1a1008;color:rgba(255,255,255,.7);padding:10px 16px;font-size:12px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);}
+
+/* SHARE MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(--paper);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;}
+.modal h3{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px;}
+.modal p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;}
+.share-url{background:#fff;border:1px solid var(--bdr);border-radius:10px;padding:12px;font-size:11px;color:var(--muted);word-break:break-all;margin-bottom:14px;max-height:80px;overflow:hidden;}
+.modal-acts{display:flex;gap:8px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+var S = {
+  view: 'timeline',
+  entries: [],
+  active: null,
+  gps: 'idle',
+  loading: false,
+  statusMsg: '',
+  confirmDelete: false,
+  showShare: false,
+  shareUrl: '',
+  readOnly: false,
+  leafletMap: null,
+};
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function dayKey(ts){ return new Date(ts).toISOString().slice(0,10); }
+function haversine(a,b,c,d){ var R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2); return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z)); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+function saveLocal(){
+  try{ localStorage.setItem('japan-diary-v4', JSON.stringify(S.entries)); }catch(e){ console.error('Save error',e); }
+}
+function loadLocal(){
+  try{ var d=localStorage.getItem('japan-diary-v4'); return d?JSON.parse(d):[]; }catch(e){ return []; }
+}
+
+// ── BASE64 ────────────────────────────────────────────────────────────────
+function toBase64(buf){
+  var bytes=new Uint8Array(buf), binary='';
+  for(var i=0;i<bytes.byteLength;i++) binary+=String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+// ── THUMBNAIL ─────────────────────────────────────────────────────────────
+function mkThumb(b64,mime){
+  return new Promise(function(res){
+    var img=new Image();
+    img.onload=function(){
+      var MAX=180, sc=Math.min(MAX/img.width,MAX/img.height,1);
+      var c=document.createElement('canvas');
+      c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',.45));
+    };
+    img.onerror=function(){ res(null); };
+    img.src='data:'+(mime||'image/jpeg')+';base64,'+b64;
+  });
+}
+
+// ── EXIF ──────────────────────────────────────────────────────────────────
+function parseExif(buf){
+  try{
+    var v=new DataView(buf); if(v.getUint16(0)!==0xFFD8) return null;
+    var o=2;
+    while(o<v.byteLength-1){ var m=v.getUint16(o); o+=2; if(m===0xFFE1){var l=v.getUint16(o);return parseIFD(buf.slice(o+2,o+l));} if((m&0xFF00)!==0xFF00)break; o+=v.getUint16(o); }
+  }catch(e){} return null;
+}
+function parseIFD(buf){
+  try{
+    var v=new DataView(buf);
+    var hdr=String.fromCharCode.apply(null,new Uint8Array(buf,0,4));
+    if(hdr.indexOf('Exif')<0) return null;
+    var t=6,le=v.getUint16(t)===0x4949;
+    var u16=function(o){return v.getUint16(t+o,le);};
+    var u32=function(o){return v.getUint32(t+o,le);};
+    var ifd=u32(4),n=u16(ifd),gpsOff=null,ds=null;
+    for(var i=0;i<n;i++){
+      var e=ifd+2+i*12,tag=u16(e);
+      if(tag===0x8825) gpsOff=u32(e+8);
+      if(tag===0x9003||tag===0x0132) ds=String.fromCharCode.apply(null,new Uint8Array(buf,t+u32(e+8),19));
+    }
+    var gps=null;
+    if(gpsOff!=null){
+      var gc=u16(gpsOff),lR,la,lnR,ln;
+      for(var j=0;j<gc;j++){
+        var ej=gpsOff+2+j*12,tagj=u16(ej),tpj=u16(ej+2),cj=u32(ej+4),voj=u32(ej+8);
+        if(tagj===1) lR=String.fromCharCode(new Uint8Array(buf,t+voj,1)[0]);
+        if(tagj===3) lnR=String.fromCharCode(new Uint8Array(buf,t+voj,1)[0]);
+        if(tagj===2&&tpj===5&&cj===3) la=rat3(buf,t+voj,le);
+        if(tagj===4&&tpj===5&&cj===3) ln=rat3(buf,t+voj,le);
+      }
+      if(la!=null&&ln!=null) gps={lat:(lR==='S'?-1:1)*la,lon:(lnR==='W'?-1:1)*ln};
+    }
+    var timestamp=null;
+    if(ds){var parts=ds.split(' '),dp=parts[0],tp=parts[1]||'00:00:00',ymd=dp.split(':'),hms=tp.split(':');timestamp=new Date(+ymd[0],ymd[1]-1,+ymd[2],+hms[0],+hms[1],+hms[2]).getTime();}
+    return{gps:gps,timestamp:timestamp};
+  }catch(e){} return null;
+}
+function rat3(buf,off,le){
+  var v=new DataView(buf),s=0;
+  var divs=[1,60,3600];
+  for(var i=0;i<3;i++){var n=v.getUint32(off+i*8,le),d=v.getUint32(off+i*8+4,le);if(d)s+=n/d/divs[i];}
+  return s;
+}
+
+// ── GEOCODE ───────────────────────────────────────────────────────────────
+function reverseGeocode(lat,lon){
+  return fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=en')
+    .then(function(r){return r.json();})
+    .then(function(d){var a=d.address||{};return a.tourism||a.amenity||a.neighbourhood||a.suburb||a.city||a.town||a.village||'Unknown location';})
+    .catch(function(){return 'Unknown location';});
+}
+
+// ── CLUSTERING ────────────────────────────────────────────────────────────
+function findMatch(gps,ts){
+  if(!gps) return null;
+  var best=null,bd=Infinity;
+  for(var i=0;i<S.entries.length;i++){
+    var e=S.entries[i];
+    if(!e.location||!e.location.lat) continue;
+    var d=haversine(gps.lat,gps.lon,e.location.lat,e.location.lon);
+    var dt=Math.abs((ts||0)-(e.timestamp||0))/60000;
+    if(d<200&&d<bd){best=e;bd=d;}
+    else if(d<500&&dt<30&&d<bd){best=e;bd=d;}
+  }
+  return best;
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────
+function generateShareUrl(){
+  try{
+    // Strip thumbnails to keep URL shorter, keep metadata
+    var slim=S.entries.map(function(e){
+      return {id:e.id,timestamp:e.timestamp,type:e.type,location:e.location,notes:e.notes,
+        media:e.media.map(function(m){return {id:m.id,title:m.title,type:m.type,thumb:m.thumb};})
+      };
+    });
+    var json=JSON.stringify(slim);
+    var b64=btoa(unescape(encodeURIComponent(json)));
+    var base=window.location.href.split('?')[0].split('#')[0];
+    return base+'?view='+encodeURIComponent(b64);
+  }catch(e){ return ''; }
+}
+
+function loadFromUrl(){
+  try{
+    var params=new URLSearchParams(window.location.search);
+    var view=params.get('view');
+    if(!view) return false;
+    var json=decodeURIComponent(escape(atob(decodeURIComponent(view))));
+    S.entries=JSON.parse(json);
+    S.readOnly=true;
+    return true;
+  }catch(e){ return false; }
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────
+function checkIn(){
+  S.gps='locating'; S.statusMsg='Getting location…'; S.loading=true; render();
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      S.statusMsg=''; S.loading=false;
+      reverseGeocode(pos.coords.latitude,pos.coords.longitude).then(function(name){
+        var entry={id:uid(),timestamp:Date.now(),type:'checkin',location:{lat:pos.coords.latitude,lon:pos.coords.longitude,name:name},notes:'',media:[]};
+        S.entries.unshift(entry);
+        saveLocal();
+        S.active=entry; S.view='entry'; S.gps='idle'; S.confirmDelete=false;
+        render();
+      });
+    },
+    function(err){
+      S.gps='manual'; S.statusMsg='GPS unavailable — enter location below.'; S.loading=false; render();
+    },
+    {enableHighAccuracy:true,timeout:12000}
+  );
+}
+
+function checkInManual(name){
+  if(!name||!name.trim()) return;
+  var entry={id:uid(),timestamp:Date.now(),type:'checkin',location:{lat:null,lon:null,name:name.trim()},notes:'',media:[]};
+  S.entries.unshift(entry);
+  saveLocal();
+  S.active=entry; S.view='entry'; S.gps='idle'; S.statusMsg=''; S.confirmDelete=false;
+  render();
+}
+
+function handleFiles(files){
+  if(!files||!files.length) return;
+  S.statusMsg='Processing '+files.length+' photo(s)…'; S.loading=true; render();
+  var idx=0;
+  function next(){
+    if(idx>=files.length){ S.statusMsg='Photos added.'; S.loading=false; saveLocal(); render(); return; }
+    var f=files[idx++];
+    f.arrayBuffer().then(function(buf){
+      var b64=toBase64(buf);
+      var exif=parseExif(buf);
+      return mkThumb(b64,f.type).then(function(thumb){
+        var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
+        var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
+        var gps=exif?exif.gps:null;
+        var match=findMatch(gps,ts);
+        if(match){
+          match.media.push(media);
+        }else{
+          var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve('Unknown location');
+          return locPromise.then(function(locName){
+            S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+            S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
+          });
+        }
+      });
+    }).then(next).catch(function(e){ console.error(e); next(); });
+  }
+  next();
+}
+
+function saveNote(entryId,note){
+  if(!note||!note.trim()) return;
+  for(var i=0;i<S.entries.length;i++){
+    if(S.entries[i].id===entryId){
+      S.entries[i].notes=(S.entries[i].notes?S.entries[i].notes+'\n\n':'')+note.trim();
+      S.active=S.entries[i]; break;
+    }
+  }
+  saveLocal(); render();
+}
+
+function deleteMedia(entryId,mediaId){
+  for(var i=0;i<S.entries.length;i++){
+    if(S.entries[i].id===entryId){
+      S.entries[i].media=S.entries[i].media.filter(function(m){return m.id!==mediaId;});
+      if(S.active&&S.active.id===entryId) S.active.media=S.entries[i].media;
+      break;
+    }
+  }
+  saveLocal(); render();
+}
+
+function deleteEntry(entryId){
+  S.entries=S.entries.filter(function(e){return e.id!==entryId;});
+  saveLocal(); S.view='timeline'; S.active=null; S.confirmDelete=false; render();
+}
+
+// ── MAP ───────────────────────────────────────────────────────────────────
+function initMap(){
+  if(S.leafletMap){S.leafletMap.remove();S.leafletMap=null;}
+  var el=document.getElementById('leafmap');
+  if(!el||!window.L) return;
+  var valid=S.entries.filter(function(e){return e.location&&e.location.lat;});
+  if(!valid.length) return;
+  var map=L.map(el); S.leafletMap=map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
+  var icon=L.divIcon({className:'',html:'<div style="width:12px;height:12px;background:#c0392b;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.3)"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+  valid.forEach(function(e){L.marker([e.location.lat,e.location.lon],{icon:icon}).bindPopup('<b>'+esc(e.location.name||'Location')+'</b><br>'+fmtDate(e.timestamp)).addTo(map);});
+  var markers=valid.map(function(e){return L.marker([e.location.lat,e.location.lon]);});
+  var grp=new L.FeatureGroup(markers); map.fitBounds(grp.getBounds().pad(0.2));
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render(){
+  var app=document.getElementById('app');
+  if(!app) return;
+  var totalPhotos=S.entries.reduce(function(s,e){return s+e.media.length;},0);
+
+  // ENTRY PANEL
+  if(S.view==='entry'&&S.active){
+    var e=S.active;
+    var mediaHtml='';
+    if(e.media.length){
+      mediaHtml='<div class="mg">';
+      e.media.forEach(function(m){
+        mediaHtml+='<div class="mi">'+(m.thumb?'<img src="'+m.thumb+'" alt="">':'<div style="background:#eee;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px">'+(m.type==='video'?'🎬':'📷')+'</div>');
+        if(!S.readOnly) mediaHtml+='<button class="mi-del" data-entry="'+e.id+'" data-media="'+m.id+'">×</button>';
+        mediaHtml+='</div>';
+      });
+      mediaHtml+='</div>';
+    }
+    var notesHtml='';
+    if(e.notes) notesHtml='<div class="note-text">'+esc(e.notes)+'</div>';
+    var editHtml='';
+    if(!S.readOnly){
+      editHtml='<textarea class="note-input" id="note-inp" placeholder="Add a note…"></textarea>'
+        +'<div class="pacts">'
+        +'<button class="btn btn-red" id="save-note-btn">Save Note</button>'
+        +'<label class="btn btn-warm" for="file-entry" style="cursor:pointer">Add Photo</label>'
+        +'<button class="btn btn-warm" id="del-toggle-btn">Delete</button>'
+        +'</div>'
+        +(S.confirmDelete?'<div class="del-box"><p>Delete this entry?</p><div class="del-row"><button class="btn btn-warm" style="flex:1" id="del-cancel-btn">Cancel</button><button class="btn btn-red" style="flex:1" id="del-confirm-btn">Yes, delete</button></div></div>':'')
+        +'<input id="file-entry" type="file" accept="image/*,video/*" multiple style="display:none">';
+    }
+    app.innerHTML='<div class="panel">'
+      +'<div class="phdr"><button class="back-btn" id="back-btn">←</button><div style="flex:1"><div class="ptitle">'+esc(e.location&&e.location.name?e.location.name:'No location')+'</div><div class="psub">'+fmtDate(e.timestamp)+' · '+fmtTime(e.timestamp)+(e.location&&e.location.lat?' · '+e.location.lat.toFixed(4)+', '+e.location.lon.toFixed(4):'')+'</div></div></div>'
+      +'<div class="pbody">'+mediaHtml+(e.notes?'<div class="lbl">Notes</div>'+notesHtml:'')+(editHtml?'<div class="lbl">Add note</div>'+editHtml:'')+'</div>'
+      +'</div>';
+
+    document.getElementById('back-btn').onclick=function(){S.view='timeline';S.confirmDelete=false;render();};
+    if(!S.readOnly){
+      var saveBtn=document.getElementById('save-note-btn');
+      if(saveBtn) saveBtn.onclick=function(){saveNote(e.id,document.getElementById('note-inp').value);};
+      var delToggle=document.getElementById('del-toggle-btn');
+      if(delToggle) delToggle.onclick=function(){S.confirmDelete=!S.confirmDelete;render();};
+      var delCancel=document.getElementById('del-cancel-btn');
+      if(delCancel) delCancel.onclick=function(){S.confirmDelete=false;render();};
+      var delConfirm=document.getElementById('del-confirm-btn');
+      if(delConfirm) delConfirm.onclick=function(){deleteEntry(e.id);};
+      var fileEntry=document.getElementById('file-entry');
+      if(fileEntry) fileEntry.onchange=function(){handleFiles(Array.from(this.files));this.value='';};
+      document.querySelectorAll('.mi-del').forEach(function(btn){
+        btn.onclick=function(){deleteMedia(this.dataset.entry,this.dataset.media);};
+      });
+    }
+    return;
+  }
+
+  // MAIN
+  var byDay={};
+  S.entries.forEach(function(e){var k=dayKey(e.timestamp);if(!byDay[k])byDay[k]=[];byDay[k].push(e);});
+  var days=Object.keys(byDay).sort(function(a,b){return b.localeCompare(a);});
+
+  var html='<div class="hdr"><div class="hdr-top"><div><div class="hdr-title">Japan <em>2026</em></div><div class="hdr-meta">'+S.entries.length+' entr'+(S.entries.length===1?'y':'ies')+' · '+totalPhotos+' photo'+(totalPhotos===1?'':'s')+'</div></div><span style="font-size:26px">🗾</span></div>'
+    +'<div class="tabs"><div class="tab '+(S.view==='timeline'?'on':'')+'" id="tab-tl">Timeline</div><div class="tab '+(S.view==='map'?'on':'')+'" id="tab-map">Map</div></div></div>';
+
+  if(S.readOnly){
+    html+='<div class="ro-banner">👁 Read-only view · shared by Guy</div>';
+  }else{
+    html+='<div class="acts"><button class="btn btn-red" id="checkin-btn">'+(S.gps==='locating'?'📡 Locating…':'📍 Check In')+'</button><label class="btn btn-warm" for="file-main" style="cursor:pointer">📷 Add Photos</label><button class="btn btn-gold" id="share-btn">📤 Share</button></div>';
+  }
+
+  if(S.statusMsg){
+    html+='<div class="sbar">'+(S.loading?'<div class="dot"></div>':'')+esc(S.statusMsg)+(S.loading?'':'<span id="dismiss-btn" style="margin-left:auto;cursor:pointer;opacity:.5">✕</span>')+'</div>';
+  }
+  if(S.gps==='manual'){
+    html+='<div class="manual-bar"><input id="manual-inp" placeholder="Type location name…"><button class="btn btn-red" id="manual-ok">✓</button><button class="btn btn-warm" id="manual-cancel">✕</button></div>';
+  }
+
+  if(S.view==='map'){
+    var valid=S.entries.filter(function(e){return e.location&&e.location.lat;});
+    html+=valid.length?'<div class="map-wrap"><div class="map-inner"><div id="leafmap"></div></div></div>':'<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">No locations yet</div></div>';
+  }else{
+    if(!days.length){
+      html+='<div class="empty"><div class="empty-icon">📖</div><div class="empty-title">Your diary awaits</div><div class="empty-text">'+(S.readOnly?'Nothing here yet.':'Tap Check In to start.')+'</div></div>';
+    }else{
+      html+='<div class="tl">';
+      days.forEach(function(day){
+        html+='<div class="day-hdr">'+fmtDate(new Date(day).getTime()+43200000)+'</div>';
+        byDay[day].forEach(function(e){
+          var thumbsHtml='';
+          if(e.media.length) e.media.slice(0,5).forEach(function(m){if(m.thumb)thumbsHtml+='<img class="thumb" src="'+m.thumb+'" alt="">';});
+          html+='<div class="card" data-id="'+e.id+'">'
+            +'<div class="card-inner"><div class="ct">'+fmtTime(e.timestamp)+'</div>'
+            +'<div class="cb"><div class="cl">'+esc(e.location&&e.location.name?e.location.name:'No location')+'</div>'
+            +(e.notes?'<div class="cp">'+esc(e.notes.slice(0,80))+(e.notes.length>80?'…':'')+'</div>':'')
+            +'<div class="tags"><span class="tag '+(e.type==='checkin'?'t1':'t2')+'">'+(e.type==='checkin'?'📍 Check-in':'📷 Photo')+'</span>'
+            +(e.media.length?'<span class="tag t3">'+e.media.length+' media</span>':'')
+            +(e.location&&e.location.lat?'<span class="tag t3">📍 GPS</span>':'')
+            +'</div></div></div>'+(thumbsHtml?'<div class="strip">'+thumbsHtml+'</div>':'')+'</div>';
+        });
+      });
+      html+='<div style="height:30px"></div></div>';
+    }
+  }
+
+  // SHARE MODAL
+  if(S.showShare){
+    html+='<div class="modal-bg" id="modal-bg"><div class="modal"><h3>Share Diary</h3><p>This link opens a read-only snapshot of your diary. Send it via WhatsApp — family taps it and sees everything.</p><div class="share-url" id="share-url-text">'+esc(S.shareUrl)+'</div><div class="modal-acts"><button class="btn btn-warm" id="modal-close">Close</button><button class="btn btn-green" id="copy-btn">📋 Copy Link</button><button class="btn btn-gold" id="wa-btn">💬 WhatsApp</button></div></div></div>';
+  }
+
+  html+='<input id="file-main" type="file" accept="image/*,video/*" multiple style="display:none">';
+  app.innerHTML=html;
+
+  // Bind events
+  var tabTl=document.getElementById('tab-tl');
+  var tabMap=document.getElementById('tab-map');
+  if(tabTl) tabTl.onclick=function(){S.view='timeline';render();};
+  if(tabMap) tabMap.onclick=function(){S.view='map';render();};
+
+  if(!S.readOnly){
+    var ciBtn=document.getElementById('checkin-btn');
+    if(ciBtn) ciBtn.onclick=function(){if(S.gps!=='locating')checkIn();};
+    var fileMain=document.getElementById('file-main');
+    if(fileMain) fileMain.onchange=function(){handleFiles(Array.from(this.files));this.value='';};
+    var shareBtn=document.getElementById('share-btn');
+    if(shareBtn) shareBtn.onclick=function(){S.shareUrl=generateShareUrl();S.showShare=true;render();};
+  }
+
+  var dismissBtn=document.getElementById('dismiss-btn');
+  if(dismissBtn) dismissBtn.onclick=function(){S.statusMsg='';S.loading=false;render();};
+  var manualInp=document.getElementById('manual-inp');
+  var manualOk=document.getElementById('manual-ok');
+  var manualCancel=document.getElementById('manual-cancel');
+  if(manualOk) manualOk.onclick=function(){if(manualInp)checkInManual(manualInp.value);};
+  if(manualInp) manualInp.onkeydown=function(e){if(e.key==='Enter')checkInManual(this.value);};
+  if(manualCancel) manualCancel.onclick=function(){S.gps='idle';S.statusMsg='';render();};
+
+  document.querySelectorAll('.card').forEach(function(c){
+    c.onclick=function(){
+      var id=this.dataset.id;
+      S.active=S.entries.find(function(e){return e.id===id;})||null;
+      S.view='entry'; S.confirmDelete=false; render();
+    };
+  });
+
+  if(S.showShare){
+    var modalClose=document.getElementById('modal-close');
+    var copyBtn=document.getElementById('copy-btn');
+    var waBtn=document.getElementById('wa-btn');
+    var modalBg=document.getElementById('modal-bg');
+    if(modalClose) modalClose.onclick=function(){S.showShare=false;render();};
+    if(modalBg) modalBg.onclick=function(e){if(e.target===this){S.showShare=false;render();}};
+    if(copyBtn) copyBtn.onclick=function(){navigator.clipboard.writeText(S.shareUrl).then(function(){copyBtn.textContent='✅ Copied!';});};
+    if(waBtn) waBtn.onclick=function(){window.open('https://wa.me/?text='+encodeURIComponent('Japan 2026 diary 🗾\n'+S.shareUrl));};
+  }
+
+  if(S.view==='map') setTimeout(initMap,50);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+var fromUrl=loadFromUrl();
+if(!fromUrl) S.entries=loadLocal();
+render();
+</script>
+</body>
+</html>

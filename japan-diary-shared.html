@@ -106,6 +106,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--ink);}
 <body>
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script>
 'use strict';
 
@@ -163,57 +164,39 @@ function mkThumb(b64,mime){
   });
 }
 
-// ── EXIF ──────────────────────────────────────────────────────────────────
-function parseExif(buf){
+// ── EXIF (via exifr library) ──────────────────────────────────────────────
+async function readExif(file){
   try{
-    var v=new DataView(buf); if(v.getUint16(0)!==0xFFD8) return null;
-    var o=2;
-    while(o<v.byteLength-1){ var m=v.getUint16(o); o+=2; if(m===0xFFE1){var l=v.getUint16(o);return parseIFD(buf.slice(o+2,o+l));} if((m&0xFF00)!==0xFF00)break; o+=v.getUint16(o); }
-  }catch(e){} return null;
-}
-function parseIFD(buf){
-  try{
-    var v=new DataView(buf);
-    var hdr=String.fromCharCode.apply(null,new Uint8Array(buf,0,4));
-    if(hdr.indexOf('Exif')<0) return null;
-    var t=6,le=v.getUint16(t)===0x4949;
-    var u16=function(o){return v.getUint16(t+o,le);};
-    var u32=function(o){return v.getUint32(t+o,le);};
-    var ifd=u32(4),n=u16(ifd),gpsOff=null,ds=null;
-    for(var i=0;i<n;i++){
-      var e=ifd+2+i*12,tag=u16(e);
-      if(tag===0x8825) gpsOff=u32(e+8);
-      if(tag===0x9003||tag===0x0132) ds=String.fromCharCode.apply(null,new Uint8Array(buf,t+u32(e+8),19));
+    if(typeof exifr === 'undefined') return null;
+    var parsed = await exifr.parse(file, {
+      tiff: true, xmp: false, icc: false, iptc: false,
+      pick: ['GPSLatitude','GPSLongitude','GPSLatitudeRef','GPSLongitudeRef','DateTimeOriginal','CreateDate','DateTime']
+    });
+    if(!parsed) return null;
+    var gps = null;
+    if(parsed.GPSLatitude && parsed.GPSLongitude){
+      var lat = parsed.GPSLatitude[0] + parsed.GPSLatitude[1]/60 + parsed.GPSLatitude[2]/3600;
+      var lon = parsed.GPSLongitude[0] + parsed.GPSLongitude[1]/60 + parsed.GPSLongitude[2]/3600;
+      if(parsed.GPSLatitudeRef==='S') lat=-lat;
+      if(parsed.GPSLongitudeRef==='W') lon=-lon;
+      gps = {lat:lat, lon:lon};
     }
-    var gps=null;
-    if(gpsOff!=null){
-      var gc=u16(gpsOff),lR,la,lnR,ln;
-      for(var j=0;j<gc;j++){
-        var ej=gpsOff+2+j*12,tagj=u16(ej),tpj=u16(ej+2),cj=u32(ej+4),voj=u32(ej+8);
-        if(tagj===1) lR=String.fromCharCode(new Uint8Array(buf,t+voj,1)[0]);
-        if(tagj===3) lnR=String.fromCharCode(new Uint8Array(buf,t+voj,1)[0]);
-        if(tagj===2&&tpj===5&&cj===3) la=rat3(buf,t+voj,le);
-        if(tagj===4&&tpj===5&&cj===3) ln=rat3(buf,t+voj,le);
-      }
-      if(la!=null&&ln!=null) gps={lat:(lR==='S'?-1:1)*la,lon:(lnR==='W'?-1:1)*ln};
-    }
-    var timestamp=null;
-    if(ds){var parts=ds.split(' '),dp=parts[0],tp=parts[1]||'00:00:00',ymd=dp.split(':'),hms=tp.split(':');timestamp=new Date(+ymd[0],ymd[1]-1,+ymd[2],+hms[0],+hms[1],+hms[2]).getTime();}
-    return{gps:gps,timestamp:timestamp};
-  }catch(e){} return null;
-}
-function rat3(buf,off,le){
-  var v=new DataView(buf),s=0;
-  var divs=[1,60,3600];
-  for(var i=0;i<3;i++){var n=v.getUint32(off+i*8,le),d=v.getUint32(off+i*8+4,le);if(d)s+=n/d/divs[i];}
-  return s;
+    var timestamp = null;
+    var dt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.DateTime;
+    if(dt instanceof Date) timestamp = dt.getTime();
+    return {gps:gps, timestamp:timestamp};
+  }catch(e){ console.error('EXIF error',e); return null; }
 }
 
 // ── GEOCODE ───────────────────────────────────────────────────────────────
 function reverseGeocode(lat,lon){
   return fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=en')
     .then(function(r){return r.json();})
-    .then(function(d){var a=d.address||{};return a.tourism||a.amenity||a.neighbourhood||a.suburb||a.city||a.town||a.village||'Unknown location';})
+    .then(function(d){
+      var a=d.address||{};
+      // Prefer meaningful area names over hyper-specific buildings/streets
+      return a.neighbourhood||a.suburb||a.quarter||a.tourism||a.amenity||a.city_district||a.city||a.town||a.village||a.county||'Unknown location';
+    })
     .catch(function(){return 'Unknown location';});
 }
 
@@ -297,23 +280,33 @@ function handleFiles(files){
   function next(){
     if(idx>=files.length){ S.statusMsg='Photos added.'; S.loading=false; saveLocal(); render(); return; }
     var f=files[idx++];
-    f.arrayBuffer().then(function(buf){
-      var b64=toBase64(buf);
-      var exif=parseExif(buf);
-      return mkThumb(b64,f.type).then(function(thumb){
-        var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
-        var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
-        var gps=exif?exif.gps:null;
-        var match=findMatch(gps,ts);
-        if(match){
-          match.media.push(media);
-        }else{
-          var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve('Unknown location');
-          return locPromise.then(function(locName){
-            S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
-            S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
-          });
-        }
+    // Read EXIF first (async, handles all camera formats)
+    readExif(f).then(function(exif){
+      return f.arrayBuffer().then(function(buf){
+        var b64=toBase64(buf);
+        return mkThumb(b64,f.type).then(function(thumb){
+          var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
+          var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
+          var gps=exif?exif.gps:null;
+          var match=findMatch(gps,ts);
+          // No GPS match — attach to most recent check-in within 4 hours
+          if(!match&&!gps){
+            var fourHours=4*60*60*1000;
+            for(var ci=0;ci<S.entries.length;ci++){
+              var ce=S.entries[ci];
+              if(ce.type==='checkin'&&Math.abs(ts-ce.timestamp)<fourHours){match=ce;break;}
+            }
+          }
+          if(match){
+            match.media.push(media);
+          }else{
+            var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve('Unknown location');
+            return locPromise.then(function(locName){
+              S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+              S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
+            });
+          }
+        });
       });
     }).then(next).catch(function(e){ console.error(e); next(); });
   }

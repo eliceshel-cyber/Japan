@@ -106,7 +106,6 @@ body{font-family:'DM Sans',sans-serif;color:var(--ink);}
 <body>
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script>
 'use strict';
 
@@ -164,28 +163,128 @@ function mkThumb(b64,mime){
   });
 }
 
-// ── EXIF (via exifr library) ──────────────────────────────────────────────
-async function readExif(file){
-  try{
-    if(typeof exifr === 'undefined') return null;
-    var parsed = await exifr.parse(file, {
-      tiff: true, xmp: false, icc: false, iptc: false,
-      pick: ['GPSLatitude','GPSLongitude','GPSLatitudeRef','GPSLongitudeRef','DateTimeOriginal','CreateDate','DateTime']
-    });
-    if(!parsed) return null;
-    var gps = null;
-    if(parsed.GPSLatitude && parsed.GPSLongitude){
-      var lat = parsed.GPSLatitude[0] + parsed.GPSLatitude[1]/60 + parsed.GPSLatitude[2]/3600;
-      var lon = parsed.GPSLongitude[0] + parsed.GPSLongitude[1]/60 + parsed.GPSLongitude[2]/3600;
-      if(parsed.GPSLatitudeRef==='S') lat=-lat;
-      if(parsed.GPSLongitudeRef==='W') lon=-lon;
-      gps = {lat:lat, lon:lon};
+// ── EXIF PARSER (inline, handles Pixel/iPhone/all JPEG) ─────────────────
+function readExif(file){
+  return new Promise(function(resolve){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{ resolve(parseExifBuffer(e.target.result)); }
+      catch(err){ resolve(null); }
+    };
+    reader.onerror = function(){ resolve(null); };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function parseExifBuffer(buf){
+  var view = new DataView(buf);
+  // Must be JPEG
+  if(view.getUint16(0) !== 0xFFD8) return null;
+  var len = buf.byteLength, off = 2;
+  // Scan for APP1 marker (0xFFE1)
+  while(off < len - 4){
+    var marker = view.getUint16(off);
+    var segLen = view.getUint16(off + 2);
+    if(marker === 0xFFE1){
+      // Check for Exif header
+      var hdr = String.fromCharCode(
+        view.getUint8(off+4), view.getUint8(off+5),
+        view.getUint8(off+6), view.getUint8(off+7)
+      );
+      if(hdr === 'Exif'){
+        return parseTIFF(buf, off + 10); // skip APP1 marker(2) + length(2) + 'Exif  '(6)
+      }
     }
-    var timestamp = null;
-    var dt = parsed.DateTimeOriginal || parsed.CreateDate || parsed.DateTime;
-    if(dt instanceof Date) timestamp = dt.getTime();
-    return {gps:gps, timestamp:timestamp};
-  }catch(e){ console.error('EXIF error',e); return null; }
+    if(marker === 0xFFDA) break; // SOS — no more metadata
+    off += 2 + segLen;
+  }
+  return null;
+}
+
+function parseTIFF(buf, tiffStart){
+  var view = new DataView(buf);
+  var le = view.getUint16(tiffStart) === 0x4949; // little endian?
+  function u16(o){ return view.getUint16(tiffStart + o, le); }
+  function u32(o){ return view.getUint32(tiffStart + o, le); }
+  function readStr(offset, maxLen){
+    var s = '';
+    for(var i = 0; i < maxLen; i++){
+      var c = view.getUint8(tiffStart + offset + i);
+      if(c === 0) break;
+      s += String.fromCharCode(c);
+    }
+    return s;
+  }
+  function readRational(offset){
+    var n = u32(offset), d = u32(offset + 4);
+    return d ? n / d : 0;
+  }
+
+  var ifdOffset = u32(4);
+  var result = {gps: null, timestamp: null};
+
+  function readIFD(ifdOff){
+    var count = u16(ifdOff);
+    for(var i = 0; i < count; i++){
+      var e = ifdOff + 2 + i * 12;
+      var tag = u16(e);
+      var type = u16(e + 2);
+      var cnt  = u32(e + 4);
+      var valOff = e + 8; // value or offset to value
+
+      // DateTimeOriginal (0x9003) or DateTime (0x0132)
+      if((tag === 0x9003 || tag === 0x0132) && !result.timestamp){
+        var strOff = u32(valOff);
+        var ds = readStr(strOff, 20);
+        if(ds.length >= 19){
+          var ymd = ds.slice(0,10).split(':');
+          var hms = ds.slice(11,19).split(':');
+          var dt = new Date(+ymd[0], ymd[1]-1, +ymd[2], +hms[0], +hms[1], +hms[2]);
+          if(!isNaN(dt.getTime())) result.timestamp = dt.getTime();
+        }
+      }
+
+      // GPS IFD pointer (0x8825)
+      if(tag === 0x8825){
+        var gpsIFDOff = u32(valOff);
+        var gpsCount = u16(gpsIFDOff);
+        var latRef='N', lat=null, lonRef='E', lon=null;
+        for(var j = 0; j < gpsCount; j++){
+          var ge = gpsIFDOff + 2 + j * 12;
+          var gtag = u16(ge);
+          var gvalOff = ge + 8;
+          if(gtag === 1){ // GPSLatitudeRef
+            latRef = String.fromCharCode(view.getUint8(tiffStart + u32(gvalOff)));
+          }
+          if(gtag === 3){ // GPSLongitudeRef
+            lonRef = String.fromCharCode(view.getUint8(tiffStart + u32(gvalOff)));
+          }
+          if(gtag === 2){ // GPSLatitude (3 rationals)
+            var gOff = u32(gvalOff);
+            lat = readRational(gOff) + readRational(gOff+8)/60 + readRational(gOff+16)/3600;
+          }
+          if(gtag === 4){ // GPSLongitude (3 rationals)
+            var gOff2 = u32(gvalOff);
+            lon = readRational(gOff2) + readRational(gOff2+8)/60 + readRational(gOff2+16)/3600;
+          }
+        }
+        if(lat !== null && lon !== null){
+          result.gps = {
+            lat: latRef === 'S' ? -lat : lat,
+            lon: lonRef === 'W' ? -lon : lon
+          };
+        }
+      }
+
+      // SubIFD / ExifIFD pointer (0x8769) — DateTimeOriginal often lives here
+      if(tag === 0x8769){
+        readIFD(u32(valOff));
+      }
+    }
+  }
+
+  readIFD(ifdOffset);
+  return (result.timestamp || result.gps) ? result : null;
 }
 
 // ── GEOCODE ───────────────────────────────────────────────────────────────
@@ -284,21 +383,33 @@ function handleFiles(files){
     var f=files[idx++];
     // Read EXIF first (async, handles all camera formats)
     readExif(f).then(function(exif){
-      // Show EXIF debug on screen
-      var dbg='EXIF: ts='+(exif&&exif.timestamp?new Date(exif.timestamp).toLocaleTimeString():'none')+' gps='+(exif&&exif.gps?exif.gps.lat.toFixed(4)+','+exif.gps.lon.toFixed(4):'none')+' fallback='+new Date(f.lastModified||Date.now()).toLocaleTimeString();
-      S.statusMsg=dbg; render();
       return f.arrayBuffer().then(function(buf){
         var b64=toBase64(buf);
         return mkThumb(b64,f.type).then(function(thumb){
           var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
           var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
           var gps=exif?exif.gps:null;
-          // Each photo gets its own entry at its own timestamp — no clustering
-          var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve(null);
-          return locPromise.then(function(locName){
-            S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+          // With GPS: use distance rules
+          // Without GPS: attach to most recent check-in within 60min BEFORE this photo
+          var match=gps?findMatch(gps,ts):null;
+          if(!match&&!gps){
+            for(var ci=0;ci<S.entries.length;ci++){
+              var ce=S.entries[ci];
+              if(ce.type==='checkin'&&ce.timestamp<=ts&&(ts-ce.timestamp)<=3600000){
+                match=ce; break;
+              }
+            }
+          }
+          if(match){
+            match.media.push(media);
             S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
-          });
+          }else{
+            var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve(null);
+            return locPromise.then(function(locName){
+              S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+              S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
+            });
+          }
         });
       });
     }).then(next).catch(function(e){ console.error(e); next(); });

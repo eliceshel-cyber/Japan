@@ -208,7 +208,9 @@ function findMatch(gps,ts){
     var e=S.entries[i];
     if(!e.location||!e.location.lat) continue;
     var d=haversine(gps.lat,gps.lon,e.location.lat,e.location.lon);
-    var dt=Math.abs((ts||0)-(e.timestamp||0))/60000;
+    var dt=Math.abs((ts||0)-(e.timestamp||0))/60000; // minutes
+    // All clustering capped at 4 hours — no cross-day merging
+    if(dt>240) continue;
     if(d<200&&d<bd){best=e;bd=d;}
     else if(d<500&&dt<30&&d<bd){best=e;bd=d;}
   }

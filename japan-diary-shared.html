@@ -413,7 +413,6 @@ function handleFiles(files){
     next();
   }
   // Use cached GPS (grabbed at page load — always available)
-  S.statusMsg='GPS cache: '+(S.cachedGps?S.cachedGps.lat.toFixed(4)+','+S.cachedGps.lon.toFixed(4):'NULL'); render();
   processWithLocation(S.cachedGps||null);
 }
 
@@ -523,7 +522,7 @@ function render(){
   S.entries.forEach(function(e){var k=dayKey(e.timestamp);if(!byDay[k])byDay[k]=[];byDay[k].push(e);});
   var days=Object.keys(byDay).sort(function(a,b){return b.localeCompare(a);});
 
-  var html='<div class="hdr"><div class="hdr-top"><div><div class="hdr-title">Japan <em>2026</em></div><div class="hdr-meta">'+S.entries.length+' entr'+(S.entries.length===1?'y':'ies')+' · '+totalPhotos+' photo'+(totalPhotos===1?'':'s')+'</div></div><span style="font-size:26px">🗾</span></div>'
+  var html='<div class="hdr"><div class="hdr-top"><div><div class="hdr-title">Japan <em>2026</em></div><div class="hdr-meta">'+S.entries.length+' entr'+(S.entries.length===1?'y':'ies')+' · '+totalPhotos+' photo'+(totalPhotos===1?'':'s')+' · '+(S.cachedGps?'📍 GPS ready':'⏳ GPS...')+'</div></div><span style="font-size:26px">🗾</span></div>'
     +'<div class="tabs"><div class="tab '+(S.view==='timeline'?'on':'')+'" id="tab-tl">Timeline</div><div class="tab '+(S.view==='map'?'on':'')+'" id="tab-map">Map</div></div></div>';
 
   if(S.readOnly){
@@ -637,6 +636,8 @@ if(navigator.geolocation){
   }
   refreshGps();
   setInterval(refreshGps,120000);
+  // Re-render every second until GPS is cached so indicator updates
+  var gpsCheck=setInterval(function(){ render(); if(S.cachedGps) clearInterval(gpsCheck); },1000);
 }
 </script>
 </body>

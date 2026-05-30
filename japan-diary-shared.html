@@ -412,19 +412,8 @@ function handleFiles(files){
     }
     next();
   }
-  // Get current location — call processWithLocation exactly once
-  if(navigator.geolocation){
-    var done=false;
-    function once(gps){ if(!done){ done=true; processWithLocation(gps); } }
-    navigator.geolocation.getCurrentPosition(
-      function(pos){ once({lat:pos.coords.latitude,lon:pos.coords.longitude}); },
-      function(){ once(null); },
-      {enableHighAccuracy:false,timeout:6000,maximumAge:120000}
-    );
-    setTimeout(function(){ once(null); },7000);
-  }else{
-    processWithLocation(null);
-  }
+  // Use cached GPS (grabbed at page load — always available)
+  processWithLocation(S.cachedGps||null);
 }
 
 function saveNote(entryId,note){
@@ -634,6 +623,20 @@ function render(){
 var fromUrl=loadFromUrl();
 if(!fromUrl) S.entries=loadLocal();
 render();
+
+// Cache GPS on page load so it's ready when Add Photos is tapped
+S.cachedGps=null;
+if(navigator.geolocation){
+  function refreshGps(){
+    navigator.geolocation.getCurrentPosition(
+      function(pos){S.cachedGps={lat:pos.coords.latitude,lon:pos.coords.longitude};},
+      function(){},
+      {enableHighAccuracy:false,timeout:10000,maximumAge:300000}
+    );
+  }
+  refreshGps();
+  setInterval(refreshGps,120000);
+}
 </script>
 </body>
 </html>

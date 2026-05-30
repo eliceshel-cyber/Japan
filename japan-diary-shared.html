@@ -412,15 +412,16 @@ function handleFiles(files){
     }
     next();
   }
-  // Try to get current location with 5s timeout
+  // Get current location — call processWithLocation exactly once
   if(navigator.geolocation){
-    var gotLoc=false;
+    var done=false;
+    function once(gps){ if(!done){ done=true; processWithLocation(gps); } }
     navigator.geolocation.getCurrentPosition(
-      function(pos){ gotLoc=true; processWithLocation({lat:pos.coords.latitude,lon:pos.coords.longitude}); },
-      function(){ processWithLocation(null); },
-      {enableHighAccuracy:true,timeout:5000,maximumAge:60000}
+      function(pos){ once({lat:pos.coords.latitude,lon:pos.coords.longitude}); },
+      function(){ once(null); },
+      {enableHighAccuracy:false,timeout:6000,maximumAge:120000}
     );
-    setTimeout(function(){ if(!gotLoc) processWithLocation(null); },5500);
+    setTimeout(function(){ once(null); },7000);
   }else{
     processWithLocation(null);
   }

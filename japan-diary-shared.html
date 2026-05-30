@@ -376,45 +376,54 @@ function checkInManual(name){
 
 function handleFiles(files){
   if(!files||!files.length) return;
-  S.statusMsg='Processing '+files.length+' photo(s)…'; S.loading=true; render();
-  var idx=0;
-  function next(){
-    if(idx>=files.length){ S.statusMsg='Photos added.'; S.loading=false; saveLocal(); render(); return; }
-    var f=files[idx++];
-    // Read EXIF first (async, handles all camera formats)
-    readExif(f).then(function(exif){
+  S.statusMsg='Getting location…'; S.loading=true; render();
+  // Grab current location silently before processing photos
+  function processWithLocation(currentGps){
+    S.statusMsg='Processing '+files.length+' photo(s)…'; render();
+    var idx=0;
+    function next(){
+      if(idx>=files.length){ S.statusMsg='Photos added.'; S.loading=false; saveLocal(); render(); return; }
+      var f=files[idx++];
+      readExif(f).then(function(exif){
+        // Use photo GPS if available, otherwise use current location
+        if(exif&&!exif.gps&&currentGps) exif={gps:currentGps,timestamp:exif?exif.timestamp:null};
+        else if(!exif&&currentGps) exif={gps:currentGps,timestamp:null};
       return f.arrayBuffer().then(function(buf){
-        var b64=toBase64(buf);
-        return mkThumb(b64,f.type).then(function(thumb){
-          var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
-          var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
-          var gps=exif?exif.gps:null;
-          // With GPS: use distance rules
-          // Without GPS: attach to most recent check-in within 60min BEFORE this photo
-          var match=gps?findMatch(gps,ts):null;
-          if(!match&&!gps){
-            for(var ci=0;ci<S.entries.length;ci++){
-              var ce=S.entries[ci];
-              if(ce.type==='checkin'&&ce.timestamp<=ts&&(ts-ce.timestamp)<=3600000){
-                match=ce; break;
-              }
-            }
-          }
-          if(match){
-            match.media.push(media);
-            S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
-          }else{
-            var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve(null);
-            return locPromise.then(function(locName){
-              S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+          var b64=toBase64(buf);
+          return mkThumb(b64,f.type).then(function(thumb){
+            var media={id:uid(),title:f.name,thumb:thumb,type:f.type.startsWith('video')?'video':'photo'};
+            var ts=exif&&exif.timestamp?exif.timestamp:(f.lastModified||Date.now());
+            var gps=exif?exif.gps:null;
+            // With GPS: use distance rules; without GPS: standalone at photo timestamp
+            var match=gps?findMatch(gps,ts):null;
+            if(match){
+              match.media.push(media);
               S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
-            });
-          }
+            }else{
+              var locPromise=gps?reverseGeocode(gps.lat,gps.lon):Promise.resolve(null);
+              return locPromise.then(function(locName){
+                S.entries.push({id:uid(),timestamp:ts,type:'photo',location:gps?{lat:gps.lat,lon:gps.lon,name:locName}:null,notes:'',media:[media]});
+                S.entries.sort(function(a,b){return b.timestamp-a.timestamp;});
+              });
+            }
+          });
         });
-      });
-    }).then(next).catch(function(e){ console.error(e); next(); });
+      }).then(next).catch(function(e){ console.error(e); next(); });
+    }
+    next();
   }
-  next();
+  // Try to get current location with 5s timeout
+  if(navigator.geolocation){
+    var gotLoc=false;
+    navigator.geolocation.getCurrentPosition(
+      function(pos){ gotLoc=true; processWithLocation({lat:pos.coords.latitude,lon:pos.coords.longitude}); },
+      function(){ processWithLocation(null); },
+      {enableHighAccuracy:true,timeout:5000,maximumAge:60000}
+    );
+    setTimeout(function(){ if(!gotLoc) processWithLocation(null); },5500);
+  }else{
+    processWithLocation(null);
+  }
 }
 
 function saveNote(entryId,note){
@@ -499,7 +508,10 @@ function render(){
     document.getElementById('back-btn').onclick=function(){S.view='timeline';S.confirmDelete=false;render();};
     if(!S.readOnly){
       var saveBtn=document.getElementById('save-note-btn');
-      if(saveBtn) saveBtn.onclick=function(){saveNote(e.id,document.getElementById('note-inp').value);};
+      if(saveBtn) saveBtn.onclick=function(){
+        var noteVal=document.getElementById('note-inp')?document.getElementById('note-inp').value:'';
+        saveNote(e.id,noteVal);
+      };
       var delToggle=document.getElementById('del-toggle-btn');
       if(delToggle) delToggle.onclick=function(){S.confirmDelete=!S.confirmDelete;render();};
       var delCancel=document.getElementById('del-cancel-btn');

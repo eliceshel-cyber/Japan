@@ -413,6 +413,7 @@ function handleFiles(files){
     next();
   }
   // Use cached GPS (grabbed at page load — always available)
+  S.statusMsg='GPS cache: '+(S.cachedGps?S.cachedGps.lat.toFixed(4)+','+S.cachedGps.lon.toFixed(4):'NULL'); render();
   processWithLocation(S.cachedGps||null);
 }
 

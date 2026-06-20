@@ -19,11 +19,19 @@
   </style>
 </head>
 <body>
-  <div id="loading"><div class="spinner"></div><p>Loading budget tracker…</p></div>
+  <div id="loading"><div class="spinner"></div><p id="loading-text">Loading budget tracker…</p></div>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    setTimeout(function(){
+      var el = document.getElementById('loading-text');
+      if (el && document.getElementById('loading').style.display !== 'none') {
+        el.textContent = 'Still loading — if this persists, check your connection or try refreshing.';
+      }
+    }, 6000);
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
   <script type="text/babel" data-presets="react">
     const { useState, useEffect, useMemo } = React;
 

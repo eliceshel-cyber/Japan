@@ -471,7 +471,19 @@
       btnPri:    {padding:'9px 15px',background:'#1a3a52',color:'#fff',border:'none',fontSize:13,fontWeight:600,borderRadius:3,display:'flex',alignItems:'center',gap:6},
     };
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+    try {
+      ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+    } catch (err) {
+      const el = document.getElementById('loading-text');
+      if (el) el.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+      console.error(err);
+    }
+    window.addEventListener('error', function(e){
+      const el = document.getElementById('loading-text');
+      if (el && document.getElementById('loading').style.display !== 'none') {
+        el.textContent = 'Script error: ' + (e.message || 'unknown') + ' (' + (e.filename||'') + ':' + (e.lineno||'') + ')';
+      }
+    });
   </script>
 </body>
 </html>

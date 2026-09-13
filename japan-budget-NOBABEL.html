@@ -63,9 +63,9 @@
     const DEFAULT_SETTINGS = { displayCurrency: 'JPY', usdRate: 150, ilsRate: 42, partySize: 5 };
 
     const DEFAULT_EXPENSES = [
-      { id:'f1', date:'2026-09-15', category:'Flights', desc:'TLV → HND outbound, Emirates KNZN8J (4 pax: Guy, Yael, Naama, Iyar) — travels Sept 16', amount:652500, source:'confirmed', notes:'Prepaid · part of $8,700 total for 4 pax (50% allocated) · booking ref KNZN8J' },
-      { id:'f2', date:'2026-09-15', category:'Flights', desc:'KIX → TLV return via Dubai, Emirates KNZN8J (4 pax: Guy, Yael, Naama, Iyar) — travels Oct 6–7', amount:652500, source:'confirmed', notes:'Prepaid · part of $8,700 total for 4 pax (50% allocated) · route KIX→DXB→TLV (EK317/EK2369)' },
-      { id:'f3', date:'2026-09-15', category:'Flights', desc:'Itamar — KIX → NRT domestic, Jetstar GK238 — travels Oct 6', amount:7500, source:'confirmed', notes:'Confirmed paid · ~$50 USD · booking WKMIRI · connects to Itamar\u2019s separate Austrian Airlines return (see f4)' },
+      { id:'f1', date:'2026-09-15', category:'Flights', desc:'TLV → HND outbound, Emirates KNZN8J (4 pax: Guy, Yael, Naama, Iyar) — travels Sept 16', amount:652500, source:'confirmed', notes:'Prepaid · part of $8,700 total for this booking (50% allocated)' },
+      { id:'f2', date:'2026-09-15', category:'Flights', desc:'KIX → TLV return via Dubai, Emirates KNZN8J (4 pax: Guy, Yael, Naama, Iyar) — travels Oct 6–7', amount:652500, source:'confirmed', notes:'Prepaid · same booking as f1, split 50/50. Route is KIX→DXB→TLV (EK317/EK2369).' },
+      { id:'f3', date:'2026-09-15', category:'Flights', desc:'Itamar — KIX → NRT domestic, Jetstar GK238 — travels Oct 6', amount:7500, source:'confirmed', notes:'Prepaid · $50 USD, booking WKMIRI. Connects to Itamar\u2019s separate Austrian Airlines return (see f4).' },
       { id:'f4', date:'2026-09-15', category:'Flights', desc:'Itamar — TLV ↔ NRT via Vienna, Austrian Airlines (separate itinerary)', amount:283856, source:'confirmed', notes:'Confirmed · $1,892.37 USD · Invoice 226002593791, ticket 257-2171944205 · OS84/OS25 outbound Sep 16, OS26/OS83 return Oct 7' },
       { id:'h1', date:'2026-09-16', category:'Hotels', desc:'Toyoko Inn Tokyo Haneda Airport (1 night)', amount:26250, source:'confirmed', notes:'Confirmed booking · arrival night, in-terminal' },
       { id:'h2', date:'2026-09-17', category:'Hotels', desc:'Rimba Hotel Shinjuku via Airbnb (4 nights Sept 17–21)', amount:191188, source:'confirmed', notes:'Prepaid Airbnb · ₪4,552.09 total · hosts Koji, Ryu Sugi' },
@@ -94,7 +94,7 @@
       { id:'t16', date:'2026-09-27', category:'Transportation', desc:'Eizan Railway to Kurama + return', amount:4500, source:'estimate', notes:'¥900/pax round trip' },
       { id:'t17', date:'2026-09-28', category:'Transportation', desc:'JR San-in Line to Saga-Arashiyama + local', amount:3500, source:'estimate', notes:'' },
       { id:'t18', date:'2026-09-28', category:'Transportation', desc:'Takkyubin luggage forwarding Kyoto → Onomichi (5 bags)', amount:12500, source:'estimate', notes:'At KABIN front desk' },
-      { id:'t19', date:'2026-09-29', category:'Transportation', desc:'JR West All Area Pass × 5 (7 days, activated today)', amount:130000, source:'confirmed', notes:'Confirmed · ¥26,000/pax × 5 exchange orders · covers Sept 29, Oct 1, 3, 4, 5 · bring passport to exchange at Kyoto Station' },
+      { id:'t19', date:'2026-09-29', category:'Transportation', desc:'JR West All Area Pass × 5 (7 days, activated today)', amount:130000, source:'confirmed', notes:'Confirmed · ¥26K/pax — covers Sept 29, Oct 1, 3, 4, 5 · bring passport' },
       { id:'t20', date:'2026-10-02', category:'Transportation', desc:'Onomichi → Mukaishima ferry + Shimanami e-bike rental', amount:35550, source:'estimate', notes:'¥110 ferry + ¥7K/pax e-bike day' },
       { id:'t21', date:'2026-10-03', category:'Transportation', desc:'Local taxi/bus Onomichi ↔ Shin-Onomichi + Miyajima ferry', amount:5000, source:'estimate', notes:'Miyajima ferry covered by JR West Pass' },
       { id:'t22', date:'2026-10-03', category:'Transportation', desc:'Takkyubin luggage forwarding Onomichi → Osaka (5 bags)', amount:12500, source:'estimate', notes:'Or carry bags Oct 4 direct Shinkansen' },
@@ -126,7 +126,7 @@
       { id:'a20', date:'2026-10-03', category:'Activities', desc:'Hiroshima Peace Memorial Museum', amount:1000, source:'estimate', notes:'¥200/pax pre-booked' },
       { id:'a21', date:'2026-10-03', category:'Activities', desc:'Itsukushima Shrine Miyajima', amount:1500, source:'estimate', notes:'¥300/pax' },
       { id:'a24', date:'2026-10-04', category:'Activities', desc:'teamLab Botanical Garden Osaka', amount:9000, source:'estimate', notes:'¥1,800/pax · online only' },
-      { id:'a25', date:'2026-10-05', category:'Activities', desc:'USJ tickets + Express Pass Nintendo + HP + Donkey Kong', amount:174000, source:'confirmed', notes:'Confirmed · 1-Day Studio Pass ¥9,900/pax + Universal Express Pass 5 ¥24,900/pax × 5 = ¥174,000 · bookings USJ-P1X000000DAUFM + DAFZY' },
+      { id:'a25', date:'2026-10-05', category:'Activities', desc:'USJ tickets + Express Pass Nintendo + HP + Donkey Kong', amount:174000, source:'confirmed', notes:'Confirmed · Studio Pass ¥9,900 + Express Pass ¥24,900, ×5' },
       { id:'a26', date:'2026-10-05', category:'Activities', desc:'Hedgehog Cafe Harry Wood Namba', amount:9000, source:'estimate', notes:'¥1,800/pax' },
       { id:'a27', date:'2026-10-06', category:'Activities', desc:'Himeji Castle entry', amount:12500, source:'estimate', notes:'¥2,500/pax' },
       { id:'fd1',  date:'2026-09-16', category:'Food', desc:'Arrival night light dinner / konbini', amount:5000, source:'estimate', notes:'Late arrival 22:20' },
@@ -145,17 +145,16 @@
       { id:'fd13', date:'2026-09-28', category:'Food', desc:'Hafuu wagyu katsu sando lunch + Kyoto Katsugyu or Yakiniku Hiro dinner + Nishiki Market grazing', amount:28000, source:'estimate', notes:'Hafuu ¥3K/pax lunch · dinner ¥4–6K/pax' },
       { id:'fd14', date:'2026-09-29', category:'Food', desc:'Ekiben on train + Omicho food crawl: Iki-Iki Tei kaisendon + crab croquettes + Kanazawa Oden + Toritake yakitori', amount:22000, source:'estimate', notes:'Full Omicho food crawl on arrival · Toritake 17:00 first seating' },
       { id:'fd15', date:'2026-09-30', category:'Food', desc:'Meals incl. Kourin Sushi lunch + Fuwari nodoguro + jibu-ni duck dish', amount:25000, source:'estimate', notes:'Kourin ¥1.1K set · Fuwari ¥3–5K · jibu-ni ask concierge' },
-      { id:'fd15b',date:'2026-09-30', category:'Food', desc:'OPTIONAL: Otome Sushi (2 Michelin stars) dinner — skip if over budget', amount:75000, source:'estimate', notes:'¥15K/pax × 5 · Book August · Best meal of the trip if you do one splurge · Tucked in small alley, local prices' },
+      { id:'fd15b',date:'2026-09-30', category:'Food', desc:'Toritake Yakitori or similar — Otome Sushi rejected Aug 19 (Wed closure, booking window passed)', amount:20000, source:'estimate', notes:'¥4K/pax × 5 · casual dinner, night 2 in Kanazawa · see Ajiraku Yumeri for Sept 29' },
       { id:'fd16', date:'2026-10-01', category:'Food', desc:'Ekiben + Onomichi arrival dinner', amount:18000, source:'estimate', notes:'' },
       { id:'fd17', date:'2026-10-02', category:'Food', desc:'Port seafood lunch + dinner Onomichi', amount:22000, source:'estimate', notes:'Setoda lemon ice cream + dock seafood' },
       { id:'fd18', date:'2026-10-03', category:'Food', desc:'Nagataya okonomiyaki dinner + Hiroshima lunch', amount:18000, source:'estimate', notes:'¥1.5K/pax okonomiyaki + ¥2K/pax lunch' },
       { id:'fd19', date:'2026-10-04', category:'Food', desc:'Hiyoko Takoyaki snack (America-mura) + Yakiniku Sora Tsuruhashi dinner', amount:25000, source:'estimate', notes:'Takoyaki ¥500 · Sora ¥3–4K/pax · Tsuruhashi Koreatown 15 min from hotel' },
       { id:'fd20', date:'2026-10-05', category:'Food', desc:'Yoshino Sushi historical lunch + USJ park meals + Yakiniku Rikimaru all-you-can-eat dinner', amount:40000, source:'estimate', notes:'Yoshino ¥3K lunch · Park food expensive · Rikimaru ¥3.5K flat' },
       { id:'fd21', date:'2026-10-06', category:'Food', desc:'Last day meals incl. KIX', amount:12000, source:'estimate', notes:'Lunch in Himeji + airport snacks' },
-      { id:'o1', date:'2026-09-15', category:'Other', desc:'Travel insurance × 4 (Guy, Naama, Iyar, Yael) — covers Sept 16 – Oct 7', amount:23166, source:'confirmed', notes:'Confirmed · Policy 421324 · $154.44 USD total ($38.61/pax) · charged to card ...2658' },
-      { id:'o1b', date:'2026-09-15', category:'Other', desc:'⚠ Travel insurance — Itamar (5th traveler)', amount:0, source:'estimate', notes:'No separate policy document found in project knowledge yet — confirm coverage exists and add actual premium' },
+      { id:'o1', date:'2026-09-15', category:'Other', desc:'Travel insurance × 4 (Guy, Yael, Naama, Iyar; covers Sept 16 – Oct 7)', amount:23166, source:'confirmed', notes:'Confirmed · $154.44 USD · Policy 421324 · Itamar has separate coverage, not on this policy' },
       { id:'o2', date:'2026-09-18', category:'Other', desc:'Pocket wifi / SIM cards × 5 (21-day rental)', amount:10000, source:'estimate', notes:'' },
-      { id:'o3', date:'2026-09-15', category:'Other', desc:'⚠ Dubai International Hotel — Family Room (layover, Sept 15)', amount:0, source:'estimate', notes:'Booking confirmed (Conf# 1094409787, Terminal 3 near Gate B14/B22) but price not shown on this notification — detailed confirmation with charge was said to follow by email, check inbox and update amount' },
+      { id:'o3', date:'2026-09-15', category:'Other', desc:'⚠ Dubai International Hotel — Family Room (layover, Sept 15)', amount:0, source:'estimate', notes:'Booking confirmed (Conf# 1094409787, Terminal 3 near Gate B14/B22) but price not shown on this notification — check inbox for detailed confirmation and update amount' },
     ];
 
     const fmt = (iso) => new Date(iso+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
